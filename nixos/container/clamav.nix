@@ -4,7 +4,7 @@ let
   container_name = "clamav";
   container_description = "Enables Antivirus scanning container";
   container_image_registry = "docker.io";
-  container_image_name = "tiredofit/clamav";
+  container_image_name = "docker.io/tiredofit/clamav";
   container_image_tag = "latest";
   cfg = config.host.container.${container_name};
   hostname = config.host.network.hostname;
@@ -78,7 +78,7 @@ in
 
       ];
       extraOptions = [
-        "--memory=2G"
+        "--memory=2.5G"
         "--memory-reservation=512M"
 
         "--network-alias=${hostname}-clamav"

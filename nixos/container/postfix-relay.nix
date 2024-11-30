@@ -4,7 +4,7 @@ let
   container_name = "postfix-relay";
   container_description = "Enables SMTP message relay container";
   container_image_registry = "docker.io";
-  container_image_name = "tiredofit/postfix";
+  container_image_name = "docker.io/tiredofit/postfix";
   container_image_tag = "latest";
   cfg = config.host.container.${container_name};
   hostname = config.host.network.hostname;
@@ -104,12 +104,12 @@ in
     sops.secrets = {
       "common-container-${container_name}" = {
         format = "dotenv";
-        sopsFile = ../../hosts/common/secrets/container/container-${container_name}.env;
+        sopsFile = "${config.host.configDir}/hosts/common/secrets/container/container-${container_name}.env";
         restartUnits = [ "docker-${container_name}.service" ];
       };
       "host-container-${container_name}" = {
         format = "dotenv";
-        sopsFile = ../../hosts/${hostname}/secrets/container/container-${container_name}.env;
+        sopsFile = "${config.host.configDir}/hosts/${hostname}/secrets/container/container-${container_name}.env";
         restartUnits = [ "docker-${container_name}.service" ];
       };
     };

@@ -2,7 +2,7 @@
 
 let
   inherit (config.networking) hostName;
-  hostsecrets = ../../../../hosts/${hostName}/secrets/sssd.yaml;
+  hostsecrets = "${config.host.configDir}/hosts/${hostName}/secrets/sssd.yaml";
   cfg = config.host.feature.authentication.sssd;
   BoolTrueFalse = x:
     if x
@@ -203,10 +203,10 @@ in
     ### We switch to SOPS declarations here because we have credentials that need to be secrets
     sops = {
       secrets = {
-        "sssd_domain" = { sopsFile = ../../../../hosts/common/secrets/sssd.yaml ; restartUnits = [ "sssd.service" ]; };
-        "sssd_ldap_baseDN" = { sopsFile = ../../../../hosts/common/secrets/sssd.yaml ; restartUnits = [ "sssd.service" ]; };
-        "sssd_ldap_sudo_searchBase" = { sopsFile = ../../../../hosts/common/secrets/sssd.yaml ; restartUnits = [ "sssd.service" ];};
-        "sssd_ldap_uri" = { sopsFile = ../../../../hosts/common/secrets/sssd.yaml ; restartUnits = [ "sssd.service" ];};
+        "sssd_domain" = { sopsFile = "${config.host.configDir}/hosts/common/secrets/sssd.yaml" ; restartUnits = [ "sssd.service" ]; };
+        "sssd_ldap_baseDN" = { sopsFile = "${config.host.configDir}/hosts/common/secrets/sssd.yaml" ; restartUnits = [ "sssd.service" ]; };
+        "sssd_ldap_sudo_searchBase" = { sopsFile = "${config.host.configDir}/hosts/common/secrets/sssd.yaml" ; restartUnits = [ "sssd.service" ];};
+        "sssd_ldap_uri" = { sopsFile = "${config.host.configDir}/hosts/common/secrets/sssd.yaml" ; restartUnits = [ "sssd.service" ];};
         #
         "sssd_ldap_bindDN" = { sopsFile = hostsecrets; restartUnits = [ "sssd.service" ];};
         "sssd_ldap_bindPass" = { sopsFile = hostsecrets; restartUnits = [ "sssd.service" ];};

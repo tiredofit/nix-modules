@@ -114,16 +114,16 @@ in
 
     sops.secrets = {
       ## Only read these secrets if the secret exists
-      "zerotier/networks" = mkIf (builtins.pathExists ../../../hosts/${config.host.network.hostname}/secrets/zerotier/networks.yaml)  {
-        sopsFile = ../../../hosts/${config.host.network.hostname}/secrets/zerotier/networks.yaml;
+      "zerotier/networks" = mkIf (builtins.pathExists "${config.host.configDir}/hosts/${config.host.network.hostname}/secrets/zerotier/networks.yaml")  {
+        sopsFile = "${config.host.configDir}/hosts/${config.host.network.hostname}/secrets/zerotier/networks.yaml";
         restartUnits = [ "zerotierone.service" ];
       };
-      "zerotier/identity_public" = mkIf (builtins.pathExists ../../../hosts/${config.host.network.hostname}/secrets/zerotier/identity.yaml)  {
-        sopsFile = ../../../hosts/${config.host.network.hostname}/secrets/zerotier/identity.yaml;
+      "zerotier/identity_public" = mkIf (builtins.pathExists "${config.host.configDir}/hosts/${config.host.network.hostname}/secrets/zerotier/identity.yaml")  {
+        sopsFile = "${config.host.configDir}/hosts/${config.host.network.hostname}/secrets/zerotier/identity.yaml";
         restartUnits = [ "zerotierone.service" ];
       };
-      "zerotier/identity_private" = mkIf (builtins.pathExists ../../../hosts/${config.host.network.hostname}/secrets/zerotier/identity.yaml)  {
-        sopsFile = ../../../hosts/${config.host.network.hostname}/secrets/zerotier/identity.yaml;
+      "zerotier/identity_private" = mkIf (builtins.pathExists "${config.host.configDir}/hosts/${config.host.network.hostname}/secrets/zerotier/identity.yaml")  {
+        sopsFile = "${config.host.configDir}/hosts/${config.host.network.hostname}/secrets/zerotier/identity.yaml";
         restartUnits = [ "zerotierone.service" ];
       };
     };

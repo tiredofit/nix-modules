@@ -4,7 +4,7 @@ let
   container_name = "restic";
   container_description = "Enables Backup container";
   container_image_registry = "docker.io";
-  container_image_name = "tiredofit/restic";
+  container_image_name = "docker.io/tiredofit/restic";
   container_image_tag = "latest";
   cfg = config.host.container.${container_name};
   hostname = config.host.network.hostname;
@@ -125,7 +125,7 @@ in
     sops.secrets = {
       "host-container-${container_name}" = {
         format = "dotenv";
-        sopsFile = ../../hosts/${hostname}/secrets/container/container-${container_name}.env;
+        sopsFile = "${config.host.configDir}/hosts/${hostname}/secrets/container/container-${container_name}.env";
         restartUnits = [ "docker-${container_name}.service" ];
       };
     };

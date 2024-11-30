@@ -5,7 +5,7 @@ let
   container_description = "Enables reverse proxy container";
   container_image_registry = "docker.io";
   container_image_name = "tiredofit/traefik";
-  container_image_tag = "2.11";
+  container_image_tag = "3.1";
   tcc_container_name = "cloudflare-companion";
   tcc_container_description = "Enables ability to create CNAMEs with traefik container";
   tcc_container_image_registry = "docker.io";
@@ -141,7 +141,7 @@ in
       extraOptions = [
         "--hostname=${hostname}.vpn.${config.host.network.domainname}"
         "--cpus=0.5"
-        "--memory=256M"
+        "--memory=384M"
         "--network-alias=${hostname}-${container_name}"
       ];
       networks = [
@@ -159,7 +159,7 @@ in
     sops.secrets = {
       "common-container-${container_name}" = {
         format = "dotenv";
-        sopsFile = ../../hosts/common/secrets/container/container-${container_name}.env;
+        sopsFile = "${config.host.configDir}/hosts/common/secrets/container/container-${container_name}.env";
         restartUnits = [ "docker-${container_name}.service" ];
       };
     };
@@ -221,15 +221,15 @@ in
     };
 
     sops.secrets = {
-      "common-container-${tcc_container_name}" = mkIf ((builtins.pathExists ../../hosts/common/secrets/container/container-${container_name}-${tcc_container_name}.env) && (config.host.container.${tcc_container_name}.enable)) {
+      "common-container-${tcc_container_name}" = mkIf ((builtins.pathExists "${config.host.configDir}/hosts/common/secrets/container/container-${container_name}-${tcc_container_name}.env") && (config.host.container.${tcc_container_name}.enable)) {
         format = "dotenv";
-        sopsFile = ../../hosts/common/secrets/container/container-${container_name}-${tcc_container_name}.env;
+        sopsFile = "${config.host.configDir}/hosts/common/secrets/container/container-${container_name}-${tcc_container_name}.env";
         restartUnits = [ "docker-${tcc_container_name}.service" ];
       };
 
-      "host-container-${tcc_container_name}" = mkIf ((builtins.pathExists ../../hosts/${hostname}/secrets/container/container-${container_name}-${tcc_container_name}.env) && (config.host.container.${tcc_container_name}.enable)) {
+      "host-container-${tcc_container_name}" = mkIf ((builtins.pathExists "${config.host.configDir}/hosts/${hostname}/secrets/container/container-${container_name}-${tcc_container_name}.env") && (config.host.container.${tcc_container_name}.enable)) {
         format = "dotenv";
-        sopsFile = ../../hosts/${hostname}/secrets/container/container-${container_name}-${tcc_container_name}.env;
+        sopsFile = "${config.host.configDir}/hosts/${hostname}/secrets/container/container-${container_name}-${tcc_container_name}.env";
         restartUnits = [ "docker-${tcc_container_name}.service" ];
       };
     };

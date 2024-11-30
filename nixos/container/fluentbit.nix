@@ -4,7 +4,7 @@ let
   container_name = "fluentbit";
   container_description = "Enables fluentbit log forwarding container";
   container_image_registry = "docker.io";
-  container_image_name = "tiredofit/alpine";
+  container_image_name = "docker.io/tiredofit/alpine";
   container_image_tag = "3.19";
   cfg = config.host.container.${container_name};
   hostname = config.host.network.hostname;
@@ -100,12 +100,12 @@ in
     sops.secrets = {
       "common-container-${container_name}" = {
         format = "dotenv";
-        sopsFile = ../../hosts/common/secrets/container/container-${container_name}.env;
+        sopsFile = "${config.host.configDir}/hosts/common/secrets/container/container-${container_name}.env";
         restartUnits = [ "docker-${container_name}.service" ];
       };
       "host-container-${container_name}" = {
         format = "dotenv";
-        sopsFile = ../../hosts/${hostname}/secrets/container/container-${container_name}.env;
+        sopsFile = "${config.host.configDir}/hosts/${hostname}/secrets/container/container-${container_name}.env";
         restartUnits = [ "docker-${container_name}.service" ];
       };
     };

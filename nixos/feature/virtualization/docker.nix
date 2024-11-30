@@ -397,12 +397,12 @@ in
     };
 
     host = {
-      filesystem = {
-        impermanence.directories =
-          lib.mkIf config.host.filesystem.impermanence.enable [
-            "/var/lib/docker" # Docker
-          ];
-      };
+      #filesystem = {
+      #  impermanence.directories =
+      #    lib.mkIf config.host.filesystem.impermanence.enable [
+      #      "/var/lib/docker" # Docker
+      #    ];
+      #};
       service = {
         docker_container_manager.enable = true;
       };
@@ -899,7 +899,6 @@ in
       docker = {
         enable = true;
         enableOnBoot = false;
-        package = pkgs.docker_27;
         logDriver = "local";
         storageDriver = docker_storage_driver;
       };

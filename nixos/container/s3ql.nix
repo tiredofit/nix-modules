@@ -4,7 +4,7 @@ let
   container_name = "s3ql";
   container_description = "Enables S3QL mounted filesystem";
   container_image_registry = "docker.io";
-  container_image_name = "tiredofit/s3ql";
+  container_image_name = "docker.io/tiredofit/s3ql";
   container_image_tag = "latest";
   cfg = config.host.container.${container_name};
   hostname = config.host.network.hostname;
@@ -110,7 +110,7 @@ in
     sops.secrets = {
       "host-container-${container_name}" = {
         format = "dotenv";
-        sopsFile = ../../hosts/${hostname}/secrets/container/container-${container_name}.env;
+        sopsFile = "${config.host.configDir}/hosts/${hostname}/secrets/container/container-${container_name}.env";
         restartUnits = [ "docker-${container_name}.service" ];
       };
     };

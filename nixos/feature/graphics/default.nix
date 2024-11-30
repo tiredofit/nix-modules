@@ -1,4 +1,4 @@
-{config, lib, ...}:
+{config, lib, pkgs, ...}:
   with lib;
 {
   imports = [
@@ -33,18 +33,21 @@
   };
 
   config = {
-    # lib.mkIf (lib.versionOlder lib.version "24.11pre")
-    # (lib.versionAtLeast lib.version "24.11")
-
     hardware = {
-      #opengl = mkIf ((config.host.feature.graphics.enable) && (config.host.feature.graphics.acceleration)) { ## 24.11 - Rename hardware.opengl. to hardware.graphics.
-      #  driSupport = true;      # 24.11 - Remove in favour of enable
-      #  driSupport32Bit = true; # 24.11 - Remove in favor of enable 32Bit
-      #};
       graphics = mkIf ((config.host.feature.graphics.enable) && (config.host.feature.graphics.acceleration)) {
         enable = true;
-        enable32Bit = true;    # 24.11
+        enable32Bit = true;
       };
+    };
+
+    environment = {
+      systemPackages = with pkgs; mkIf (config.host.feature.graphics.enable) [
+        libva
+        libva-utils
+        vulkan-loader
+        vulkan-tools
+        vulkan-validation-layers
+      ];
     };
   };
 }

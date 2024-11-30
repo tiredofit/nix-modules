@@ -136,7 +136,8 @@ in
             hideMounts = true ;
             directories = [
               "/root"                            # Root
-              ]  ++ cfg_impermanence.directories;
+              "/var/lib/nixos"                   # Persist UID and GID mappings
+            ]  ++ cfg_impermanence.directories;
             files = [
               "/etc/machine-id"
             ] ++ cfg_impermanence.files;

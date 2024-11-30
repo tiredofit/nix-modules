@@ -17,10 +17,10 @@ let
         output )
             case $2 in
                 choose )
-                    if command -v "rofi" &>/dev/null && ! [ -t 0 ] ; then
+                    if command -v "rofi" &>/dev/null ; then
                         choose_menu="rofi"
                         choose_menu_command="rofi -dmenu -i"
-                    elif command -v "dmenu" &>/dev/null && ! [ -t 0 ]; then
+                    elif command -v "dmenu" &>/dev/null ; then
                         choose_menu="dmenu"
                         choose_menu_command='dmenu'
                     else
@@ -30,7 +30,7 @@ let
                     case $backend in
                         pipewire )
                             node=$(mktemp)
-                            pw-dump Node | ${pkgs.jq}/bin/jq -r '.[]|select(.info.props|.["media.class"] == "Audio/Sink" and has("device.api"))|.info.props["node.description"]' > $node
+                            pw-dump Node | ${pkgs.jq}/bin/jq -r '.[]|select(.info.props|.["media.class"] == "Audio/Sink" and has("device.api"))|.info.props["node.description"]' | sed "/HDMI/d"> $node
 
                                 if [ $(${pkgs.coreutils}/bin/wc -l "$node" | ${pkgs.gawk}/bin/awk '{print $1}') -lt 1 ] ; then
                                     return 1
@@ -266,21 +266,6 @@ in
         script_sound-tool
       ];
     };
-
-  #  # 24.11 - This whole section is due to be removed
-  #  sound = lib.mkMerge [
-  #    (lib.mkIf (cfg.enable && cfg.server == "pulseaudio") {
-  #      enable = mkForce true;
-  #    })
-#
-  #    (lib.mkIf (cfg.enable && cfg.server == "pipewire") {
-  #      enable = mkForce false;
-  #    })
-#
-  #   (lib.mkIf (! cfg.enable ) {
-  #      enable = false;
-  #    })
-  #  ];
 
     hardware.pulseaudio = lib.mkMerge [
       (lib.mkIf (cfg.enable && cfg.server == "pulseaudio") {
