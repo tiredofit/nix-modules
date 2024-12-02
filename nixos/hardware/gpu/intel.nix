@@ -13,6 +13,7 @@ in {
     };
 
     hardware.opengl = {
+      enable = mkDefault true;
       extraPackages = with pkgs; [
         intel-compute-runtime
         intel-media-driver

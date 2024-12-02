@@ -20,6 +20,7 @@ in {
 
     hardware = {
       graphics = {
+        enable = mkDefault true;
         extraPackages = with pkgs; [
           amdvlk
           rocmPackages.clr
