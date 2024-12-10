@@ -5,7 +5,7 @@ let
   container_description = "Enables fluentbit log forwarding container";
   container_image_registry = "docker.io";
   container_image_name = "docker.io/tiredofit/alpine";
-  container_image_tag = "3.19";
+  container_image_tag = "3.21";
   cfg = config.host.container.${container_name};
   hostname = config.host.network.hostname;
   activationScript = "system.activationScripts.docker_${container_name}";
