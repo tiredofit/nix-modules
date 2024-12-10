@@ -15,7 +15,7 @@ in
         };
       };
       loader = mkOption {
-        default = "grub";
+        default = "systemd";
         type = types.enum [ "grub" "systemd" ];
         description = "Enables booting via Grub";
         ## TODO Consider creating top level boot.nix feature and integrating systemd-boot or none (pi)
