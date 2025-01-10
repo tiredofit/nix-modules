@@ -277,19 +277,19 @@ in
       })
 
      (lib.mkIf (! cfg.enable ) {
-        enable = false;
+        enable = mkForce false;
       })
     ];
 
     services.pipewire = mkIf (cfg.enable && cfg.server == "pipewire") {
       enable = mkForce true;
       alsa = {
-        enable = true;
-        support32Bit = true;
+        enable = mkDefault true;
+        support32Bit = mkDefault true;
       };
-      pulse.enable = true;
+      pulse.enable = mkDefault true;
       wireplumber = {
-        enable = true;
+        enable = mkDefault true;
         configPackages = [
           #(pkgs.writeTextFile {
           #   name = "disable-suspend";
@@ -303,7 +303,7 @@ in
     };
 
     security.rtkit = mkIf (cfg.enable && cfg.server == "pipewire") {
-      enable = true;
+      enable = mkDefault true;
     };
 
     host.filesystem.impermanence.directories = mkIf (cfg.enable && cfg.server == "pipewire" && config.host.filesystem.impermanence.enable) [
