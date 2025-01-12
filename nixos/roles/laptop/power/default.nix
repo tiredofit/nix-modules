@@ -52,7 +52,6 @@ in
               HandlePowerKey=ignore
           '';
         };
-
         # temperature target on battery
         undervolt = {
           tempBat = 65; # deg C
