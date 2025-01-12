@@ -81,8 +81,8 @@ in
         # <https://www.kernel.org/doc/html/latest/admin-guide/pm/cpufreq.html>
         CPU_SCALING_GOVERNOR_ON_AC = "performance";
         CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
-        CPU_DRIVER_OPMODE_ON_AC=active
-        CPU_DRIVER_OPMODE_ON_BAT=active
+        CPU_DRIVER_OPMODE_ON_AC= "active";
+        CPU_DRIVER_OPMODE_ON_BAT= "active";
 
         #CPU_SCALING_MIN_FREQ_ON_AC = MHz 1400;
         #CPU_SCALING_MAX_FREQ_ON_AC = MHz 1700;

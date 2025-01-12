@@ -13,14 +13,12 @@ in
         description = "Enables tools for display backlight control";
       };
       keys = {
-        down = {
-          enable = mkOption {
+        down = mkOption {
           default = 224;
           type = with types; int;
           description = "Key to increase brightness";
         };
-        up = {
-          enable = mkOption {
+        up = mkOption {
           default = 225;
           type = with types; int;
           description = "Key to increase brightness";
@@ -38,15 +36,5 @@ in
         { keys = [ cfg.keys.down ]; events = [ "key" ]; command = "/run/current-system/sw/bin/light -U 10"; }
       ];
     };
-  };  programs.light.enable = true;
-  services.actkbd = {
-    enable = true;
-    bindings = [
-      { keys = [ 224 ]; events = [ "key" ]; command = "/run/current-system/sw/bin/light -U 10"; }
-      { keys = [ 225 ]; events = [ "key" ]; command = "/run/current-system/sw/bin/light -A 10"; }
-    ];
   };
-
-
-# 232 233 for asus
 }
