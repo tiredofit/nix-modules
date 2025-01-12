@@ -41,8 +41,8 @@ in
 
         # battery care drivers
         # NATACPI_ENABLE = 1;
-        # TPACPI_ENABLE = 1;
-        # TPSMAPI_ENABLE = 1;
+        TPACPI_ENABLE = 1;
+        TPSMAPI_ENABLE = 1;
 
         # DISK_DEVICES = "nvme0n1 mmcblk0";
 
@@ -50,7 +50,7 @@ in
         # DISK_APM_LEVEL_ON_BAT = "128 128";
 
         # DISK_IDLE_SECS_ON_AC=0;
-        DISK_IDLE_SECS_ON_BAT = 5;
+        DISK_IDLE_SECS_ON_BAT = 2;
 
         # Timeout (in seconds) for writing unsaved data in file system buffers to disk.
         # MAX_LOST_WORK_SECS_ON_AC = 15;
@@ -75,8 +75,8 @@ in
 
         # Select the platform profile to control system operating characteristics
         # around power/performance levels, thermal and fan speed.
-        # PLATFORM_PROFILE_ON_AC = "performance";
-        # PLATFORM_PROFILE_ON_BAT = "low-power";
+        PLATFORM_PROFILE_ON_AC = "performance";
+        PLATFORM_PROFILE_ON_BAT = "low-power";
 
         # <https://www.kernel.org/doc/html/latest/admin-guide/pm/cpufreq.html>
         #CPU_SCALING_GOVERNOR_ON_AC = "schedutil";
