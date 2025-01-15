@@ -11,6 +11,7 @@ in
         enable = mkDefault true;
         package = pkgs.hyprland;
         portalPackage = pkgs.xdg-desktop-portal-wlr;
+        withUWSM  = true;
         #package = inputs.hyprland.packages.${pkgs.system}.hyprland;
       };
     };
@@ -29,7 +30,6 @@ in
         xdg-desktop-portal-hyprland
         xdg-desktop-portal-shana
         xdg-desktop-portal-wlr
-      ];
     };
   };
 }
