@@ -30,6 +30,7 @@ in
         xdg-desktop-portal-hyprland
         xdg-desktop-portal-shana
         xdg-desktop-portal-wlr
+      ];
     };
   };
 }
