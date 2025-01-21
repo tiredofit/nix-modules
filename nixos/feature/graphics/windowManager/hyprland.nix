@@ -23,12 +23,12 @@ in
         "org.freedesktop.impl.portal.Secret" = [ "gnome-keyring" ];
         #"org.freedesktop.impl.portal.ScreenCast" = [ "wlr" ];
         #"org.freedesktop.impl.portal.Screenshot" = [ "wlr" ];
-        "org.freedesktop.portal.FileChooser" = [ "xdg-desktop-portal-shana" ];
+        #"org.freedesktop.portal.FileChooser" = [ "xdg-desktop-portal-shana" ];
       };
       extraPortals = with pkgs; [
         xdg-desktop-portal-gtk
-        xdg-desktop-portal-hyprland
-        xdg-desktop-portal-shana
+        #xdg-desktop-portal-hyprland
+        #xdg-desktop-portal-shana
         xdg-desktop-portal-wlr
       ];
     };
