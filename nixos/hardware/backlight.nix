@@ -28,9 +28,10 @@ in
   };
 
   config = mkIf cfg.enable {
-    programs.light.enable = true;
+    hardware.acpilight.enable = mkDefault true;
+    programs.light.enable = mkDefault true;
     services.actkbd = {
-      enable = true;
+      enable = mkDefault true;
       bindings = [
         { keys = [ cfg.keys.up ]; events = [ "key" ]; command = "/run/current-system/sw/bin/light -A 10"; }
         { keys = [ cfg.keys.down ]; events = [ "key" ]; command = "/run/current-system/sw/bin/light -U 10"; }

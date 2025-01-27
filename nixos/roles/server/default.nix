@@ -41,6 +41,14 @@ in
         graphics = {
           enable = mkDefault false;                   # Maybe if we were doing openCL
         };
+        powermanagement = {
+          disks = {
+            enable = mkDefault true;
+            platter = mkDefault false;
+          };
+          thermal.enable = mkForce false;
+          undervolt.enable = mkForce false;
+        };
         virtualization = {
           docker = {
             enable = mkDefault true;

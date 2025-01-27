@@ -82,7 +82,18 @@ in
           ];
         };
         powermanagement = {
-          enable = mkDefault false;
+          battery.enable = mkDefault false;
+          disks = {
+            enable = mkDefault true;
+            platter = mkDefault true;
+          };
+          powertop = {
+            enable = mkDefault true;
+            startup = mkDefault false;
+          };
+          thermal.enable = mkDefault true;
+          tlp.enable = mkDefault false;
+          undervolt.enable = mkDefault false;
         };
       };
       filesystem = {

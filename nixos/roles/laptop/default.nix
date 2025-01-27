@@ -6,7 +6,7 @@ in
 {
   imports = [
     (modulesPath + "/installer/scan/not-detected.nix")
-    ./power
+    #./power
   ];
 
   config = mkIf (role == "laptop" || role == "hybrid") {
@@ -24,8 +24,18 @@ in
           acceleration = mkDefault true;      # Since we have a GUI, we want openGL
         };
         powermanagement = {
-          enable = true;
-          laptop = true;
+          battery.enable = mkDefault true;
+          disks = {
+            enable = mkDefault true;
+            platter = mkDefault true;
+          };
+          powertop = {
+            enable = mkDefault true;
+            startup = mkDefault false;
+          };
+          thermal.enable = mkDefault true;
+          tlp.enable = mkDefault true;
+          undervolt.enable = mkDefault true;
         };
       };
       filesystem = {
@@ -41,6 +51,7 @@ in
         android.enable = mkDefault true;
         backlight.enable = mkDefault true;    # Most laptops have a backlight
         bluetooth.enable = mkDefault true;    # Most wireless cards have bluetooth radios
+        lid.enable = mkDefault true;          # Clamshell lid
         raid.enable = mkDefault false;        #
         printing.enable = mkDefault true;     # If we don't have access to a physical printer we should be able to remotely print
         scanning.enable = mkDefault true;

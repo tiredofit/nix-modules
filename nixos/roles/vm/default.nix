@@ -27,7 +27,18 @@ in
           enable = mkDefault false;                   # Maybe if we were doing openCL
         };
         powermanagement = {
-          enable = mkDefault true;
+          battery.enable = mkDefault false;
+          disks = {
+            enable = mkDefault false;
+            platter = mkDefault false;
+          };
+          powertop = {
+            enable = mkDefault false;
+            startup = mkDefault false;
+          };
+          thermal.enable = mkDefault false;
+          tlp.enable = mkDefault fasle;
+          undervolt.enable = mkDefault false;
         };
       };
       filesystem = {
