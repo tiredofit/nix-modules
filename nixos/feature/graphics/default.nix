@@ -24,17 +24,13 @@
         default = null;
         description = "Backend of displayManager";
       };
-      monitors = mkOption {
-        type = with types; listOf str;
-        default = [];
-        description = "Declare the order of monitors in Window manager configurations";
-      };
     };
   };
 
   config = {
     hardware = {
       graphics = mkIf ((config.host.feature.graphics.enable) && (config.host.feature.graphics.acceleration)) {
+        package = pkgs.unstable.mesa.drivers;
         enable = true;
         enable32Bit = true;
       };
