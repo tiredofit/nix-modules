@@ -21,7 +21,20 @@ in
     fonts = mkIf graphics.enable {
       enableDefaultPackages = false;
       fontDir.enable = true;
-
+       #error: nerdfonts has been separated into individual font packages under the namespace nerd-fonts.
+       #For example change:
+       #  fonts.packages = [
+       #    ...
+       #    (pkgs.nerdfonts.override { fonts = [ "0xproto" "DroidSansMono" ]; })
+       #  ]
+       #to
+       #  fonts.packages = [
+       #    ...
+       #    pkgs.nerd-fonts._0xproto
+       #    pkgs.nerd-fonts.droid-sans-mono
+       #  ]
+       #or for all fonts
+       #  fonts.packages = [ ... ] ++ builtins.filter lib.attrsets.isDerivation (builtins.attrValues pkgs.nerd-fonts)
       packages = with pkgs; [
         caladea
         cantarell-fonts
@@ -40,14 +53,43 @@ in
         ubuntu_font_family
         weather-icons
 
-        # nerdfonts
-        (nerdfonts.override { fonts = [
-          "DroidSansMono"
-          "Hack"
-          "JetBrainsMono"
-          "Noto"
-        ];})
-      ];
+      ] ++ (
+        if (lib.versionAtLeast lib.version "25.05pre") then [
+          nerd-fonts.droid-sans-mono
+          nerd-fonts.hack
+          nerd-fonts.jetbrains-mono
+          nerd-fonts.noto
+          nerd-fonts.zed-mono
+        ] else [
+          (nerdfonts.override {
+            fonts = [
+              "DroidSansMono"
+              "Hack"
+              "JetBrainsMono"
+              "Noto"
+            ];
+          })
+        ]
+      );
+#  # Include Nerd Fonts based on version
+#  (lib.optionalAttrs (!lib.versionAtLeast lib.version "25.05pre") (
+#    nerdfonts.override { fonts = [
+#      "DroidSansMono"
+#      "Hack"
+#      "JetBrainsMono"
+#      "Noto"
+#    ]; }
+#  ))
+#
+#  # Conditionally include Nerd Fonts if the version is at least 25.05pre
+#  (lib.optionalAttrs (lib.versionAtLeast lib.version "25.05pre") [
+#    #nerd-fonts.droid-sans-mono
+#    #nerd-fonts.hack
+#    #nerd-fonts.jetbrains-mono
+#    #nerd-fonts.noto
+#    #nerd-fonts.zed-mono
+#  ])
+#];
 
       # user defined fonts
       # the reason there's Noto Color Emoji everywhere is to override DejaVu's
