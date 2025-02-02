@@ -9,8 +9,8 @@ in
     programs = {
       hyprland = {
         enable = mkDefault true;
-        package = pkgs.unstable.hyprland;
-        portalPackage = pkgs.unstable.xdg-desktop-portal-wlr;
+        package = pkgs.hyprland;
+        portalPackage = pkgs.xdg-desktop-portal-wlr;
         withUWSM  = true;
         #package = inputs.hyprland.packages.${pkgs.system}.hyprland;
       };
