@@ -260,6 +260,10 @@ in
     };
   };
 
+  imports = lib.optionals (lib.versionOlder lib.version "25.05pre") [
+    (lib.mkAliasOptionModule ["services" "pulseaudio" "enable"] ["hardware" "pulseaudio" "enable"])
+  ];
+
   config = {
     environment = {
       systemPackages = mkIf cfg.enable [
@@ -267,7 +271,7 @@ in
       ];
     };
 
-    hardware.pulseaudio = lib.mkMerge [
+    services.pulseaudio = lib.mkMerge [
       (lib.mkIf (cfg.enable && cfg.server == "pulseaudio") {
         enable = mkForce true;
       })
@@ -291,13 +295,6 @@ in
       wireplumber = {
         enable = mkDefault true;
         configPackages = [
-          #(pkgs.writeTextFile {
-          #   name = "disable-suspend";
-          #   text = ''
-          #     session.suspend-timeout-seconds = 0
-          #   '';
-          #   destination = "/share/wireplumber/main.lua.d/90-suspend-timeout.lua";
-          #})
         ];
       };
     };
