@@ -4,14 +4,14 @@ with lib;
 
 {
   imports = [
-  ./application
-  ./container
-  ./feature
-  ./filesystem
-  ./hardware
-  ./network
-  ./roles/default.nix
-  ./service
+    ./application
+    ./container
+    ./feature
+    ./filesystem
+    ./hardware
+    ./network
+    ./roles/default.nix
+    ./service
   ];
 
   # Secrets & file path fix
