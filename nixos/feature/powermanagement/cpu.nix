@@ -29,7 +29,7 @@ in
 
     services = {
       auto-cpufreq.enable = !config.host.feature.powermanagement.tlp.enable;
-      power-profiles-daemon.enable = !config.host.feature.powermanagement.tlp.enable;
+      #power-profiles-daemon.enable = !config.host.feature.powermanagement.tlp.enable;
     };
   };
 }

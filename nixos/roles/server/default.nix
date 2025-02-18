@@ -42,6 +42,9 @@ in
           enable = mkDefault false;                   # Maybe if we were doing openCL
         };
         powermanagement = {
+          cpu = {
+            enable = mkDefault false;
+          };
           disks = {
             enable = mkDefault true;
             platter = mkDefault false;
