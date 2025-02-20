@@ -67,7 +67,7 @@ in
             ServerActive = mkDefault cfg.serverActive;
           }
           (mkIf config.host.feature.virtualization.docker.enable {
-            Plugins.Docker.Endpoint = "unix:///var/run/docker.sock";
+            "Plugins.Docker.Endpoint" = "unix:///var/run/docker.sock";
           })
         ];
       };
