@@ -1,4 +1,4 @@
-{config, lib, pkgs, ...}:
+{ config, lib, pkgs, ... }:
 
 let
   cfg = config.host.service.zabbix_agent;
@@ -45,28 +45,34 @@ in
       zabbixAgent = {
         enable = true;
         listen = {
-          ip = mkDefault cfg.listenIP ;
+          ip = mkDefault cfg.listenIP;
           port = mkDefault cfg.listenPort;
         };
         openFirewall = mkDefault true;
         package = mkDefault pkgs.unstable.zabbix.agent2;
         server = mkDefault cfg.server;
-        settings = {
-          BufferSend = mkDefault 5;
-          BufferSize = mkDefault 100;
-          ControlSocket = cfg.controlSocket;
-          DebugLevel = mkDefault 2;
-          Hostname = mkDefault config.networking.fqdn ;
-          LogFile = mkDefault "/var/log/zabbix/zabbix_agentd.log";
-          LogFileSize = mkDefault 0;
-          LogType = mkForce "file";
-          RefreshActiveChecks = mkDefault 120;
-          Server = mkDefault cfg.server;
-          ServerActive = mkDefault cfg.serverActive;
-        };
+
+        settings = mkMerge [
+          {
+            BufferSend = mkDefault 5;
+            BufferSize = mkDefault 100;
+            ControlSocket = cfg.controlSocket;
+            DebugLevel = mkDefault 2;
+            Hostname = mkDefault config.networking.fqdn;
+            LogFile = mkDefault "/var/log/zabbix/zabbix_agentd.log";
+            LogFileSize = mkDefault 0;
+            LogType = mkForce "file";
+            RefreshActiveChecks = mkDefault 120;
+            Server = mkDefault cfg.server;
+            ServerActive = mkDefault cfg.serverActive;
+          }
+          (mkIf config.host.feature.virtualization.docker.enable {
+            Plugins.Docker.Endpoint = "unix:///var/run/docker.sock";
+          })
+        ];
       };
-      logrotate.settings."/var/log/zabbix/zabbix_agentd.log" = {
-      };
+
+      logrotate.settings."/var/log/zabbix/zabbix_agentd.log" = {};
     };
 
     systemd.services.zabbix-agent = {
