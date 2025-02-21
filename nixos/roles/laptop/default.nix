@@ -51,6 +51,7 @@ in
         android.enable = mkDefault true;
         backlight.enable = mkDefault true;    # Most laptops have a backlight
         bluetooth.enable = mkDefault true;    # Most wireless cards have bluetooth radios
+        firmware.enable = mkDefault true;     #
         lid.enable = mkDefault true;          # Clamshell lid
         raid.enable = mkDefault false;        #
         printing.enable = mkDefault true;     # If we don't have access to a physical printer we should be able to remotely print
