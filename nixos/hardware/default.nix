@@ -7,6 +7,7 @@ with lib;
     ./backlight.nix
     ./bluetooth.nix
     ./cpu
+    ./firmware.nix
     ./gpu
     ./keyboard.nix
     ./lid.nix
