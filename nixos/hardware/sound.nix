@@ -143,7 +143,7 @@ let
                                 pactl info | ${pkgs.gnused}/bin/sed -En 's/Default Sink: (.*)/\1/p'
                             }
 
-                            sinks=$(pactl list short sinks | grep -v easyeffects)
+                            sinks=$(pactl list short sinks | ${pkgs.gnugrep}/bin/grep -v easyeffects)
                             sink_count=$(echo "$sinks" | ${pkgs.coreutils}/bin/wc -l)
 
                             current_sink=$(get_current_sink)
@@ -169,6 +169,18 @@ let
                             done
                         ;;
                     esac
+                ;;
+            esac
+        ;;
+        info )
+            case $backend in
+                pipewire )
+                    echo "Output: $(wpctl status | ${pkgs.gnugrep}/bin/grep "Audio/Sink" | ${pkgs.gawk}/bin/awk '{print $3}')"
+                    echo "Input: $(wpctl status | ${pkgs.gnugrep}/bin/grep "Audio/Source" | ${pkgs.gawk}/bin/awk '{print $3}')"
+                ;;
+                pulseaudio )
+                    echo "Output: $(pactl info | ${pkgs.gnugrep}/bin/grep "Default Sink:" | ${pkgs.gawk}/bin/awk '{print $3}')"
+                    echo "Input:" $(pactl info | ${pkgs.gnugrep}/bin/grep "Default Source:" | ${pkgs.gawk}/bin/awk '{print $3}')"
                 ;;
             esac
         ;;
@@ -201,6 +213,54 @@ let
                         ;;
                         pulseaudio )
                             pactl set-sink-volume @DEFAULT_SOURCE@ +1
+                        ;;
+                    esac
+                ;;
+            esac
+        ;;
+        preset )
+            disable_devices() {
+                case $backend in                                # Unload the device
+                    pipewire )
+                        _audio_devices=$(pw-dump | jq -c '.[] | select(.info.props["media.class"] == "Audio/Device") | {id: .id, device_product_name: .info.props["device.product.name"]}')
+
+                        echo "$_audio_devices" | while IFS= read -r _device; do
+                            _card_id=$(echo "$device" | jq -r '.id')
+                            alsa_card_name=$(echo "$device" | jq -r '.alsa_card_name')
+
+                            for card_name in $(echo $card_ignore | tr ',' '\n') ; do
+                            if [[ "$alsa_card_name" == *"$card_name"* ]]; then
+                                #echo "Ignoring device with ID $id and ALSA card name: $alsa_card_name"
+                            else
+                                #echo "Unloading device with ID $id and ALSA card name: $alsa_card_name"
+                                pw-cli destroy "$id"
+                            fi
+                        done
+                    ;;
+                    pulseaudio )
+                        :
+                    ;;
+                esac
+            }
+
+            case $2 in
+                desktop )
+                    case $backend in
+                        pipewire )
+                            wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%-
+                        ;;
+                        pulseaudio )
+                            pactl set-sink-volume @DEFAULT_SINK@ -1
+                        ;;
+                    esac
+                ;;
+                internal )
+                    case $backend in
+                        pipewire )
+                            wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
+                        ;;
+                        pulseaudio )
+                            pactl set-sink-mute @DEFAULT_SINK@ toggle
                         ;;
                     esac
                 ;;
@@ -240,6 +300,31 @@ let
                 ;;
             esac
         ;;
+      * | "" )
+        echo "Sound Tool"
+        echo ""
+        echo "Commands:
+        echo ""
+        echo "  info"
+        echo ""
+        echo "  output"
+        echo "    - choose"
+        echo "    - cycle"
+        echo ""
+        echo "  preset"
+        echo "    - desktop"
+        echo "    - internal"
+        echo ""
+        echo "  vol"
+        echo "    - down"
+        echo "    - mute"
+        echo "    - up"
+        echo ""
+        echo "  mic"
+        echo "    - down"
+        echo "    - mute"
+        echo "    - up"
+    ;;
     esac
   '';
 in

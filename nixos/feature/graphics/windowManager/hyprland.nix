@@ -10,7 +10,7 @@ in
       hyprland = {
         enable = mkDefault true;
         package = pkgs.hyprland;
-        portalPackage = pkgs.xdg-desktop-portal-wlr;
+        portalPackage = pkgs.xdg-desktop-portal-hyprland;
         withUWSM  = true;
         #package = inputs.hyprland.packages.${pkgs.system}.hyprland;
       };
