@@ -33,8 +33,6 @@ in
   };
 
   config = mkIf cfg.enable {
-    environment.systemPackages = services.fprintd.package;
-
     services = {
       fprintd = {
         enable = cfg.service.enable;
@@ -46,8 +44,7 @@ in
     };
 
     host.filesystem.impermanence.directories = mkIf config.host.filesystem.impermanence.enable [
-      "/var/lib/fprintd"
+      "/var/lib/fprint"
     ];
-
   };
 }
