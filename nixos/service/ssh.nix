@@ -11,7 +11,7 @@ let
 
   authMethods =
     if config.host.service.ssh.passwordlessLogin
-    then "publickey password keyboard-interactive"
+    then "publickey,password,keyboard-interactive"
     else "publickey,password publickey,keyboard-interactive";
 in
   with lib;
