@@ -6,6 +6,7 @@ with lib;
     ./docker_container_manager.nix
     ./eternal_terminal.nix
     ./fluent-bit.nix
+    ./iodine.nix
     ./logrotate.nix
     ./monit.nix
     ./ssh.nix
