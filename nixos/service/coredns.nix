@@ -25,7 +25,7 @@ in
       coredns
     ];
 
-    services = mkif cfg.service.enable {
+    services = mkIf cfg.service.enable {
       coredns = {
         enable = mkIf cfg.service.enable;
         config = ''
