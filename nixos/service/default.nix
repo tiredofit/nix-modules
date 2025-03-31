@@ -4,6 +4,7 @@ with lib;
 {
   imports = [
     ./docker_container_manager.nix
+    ./coredns.nix
     ./eternal_terminal.nix
     ./fluent-bit.nix
     ./iodine.nix
