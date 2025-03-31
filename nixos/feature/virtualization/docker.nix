@@ -370,6 +370,11 @@ in
         type = with types; bool;
         description = "Enables tools and daemon for containerization";
       };
+      bridge_loopback = mkOption {
+        default = true;
+        type = with types; bool;
+        description = "Allow for NAT Loopback from br-* interfaces to allow resolving host";
+      };
     };
     host.feature.virtualization.docker.containers = mkOption {
       default = {};
@@ -407,6 +412,10 @@ in
         docker_container_manager.enable = true;
       };
     };
+
+    networking.firewall.trustedInterfaces = mkIf (cfg.bridge_loopback) [
+      "br-+"
+    ];
 
     programs = {
       bash = {
