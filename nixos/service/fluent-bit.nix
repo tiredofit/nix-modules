@@ -52,6 +52,18 @@ in
         default = 2020;
         description = "Port to listen for HTTP server";
       };
+      inotify = {
+        enable = mkOption {
+          default = true;
+          type = with types; bool;
+          description = "Enables inotify instance limit adjustment for log file reading";
+        };
+        instances = mkOption {
+          type = with types; int;
+          description = "Inotify Max user instances";
+          default = 8192;
+        };
+      };
       input.docker.enable = mkOption {
         type = with types; bool;
         default = false;
@@ -177,6 +189,10 @@ in
         message = "You need to enable secrets before using the Loki Output plugin due to it passing credentials";
       }
     ];
+
+    boot.kernel.sysctl = mkIf (cfg.inotify.enable) {
+      "fs.inotify.max_user_instances" = cfg.inotify.instances; # Increase inotify instances to prevent "inotify instance limit reached" errors with FluentBit
+    };
 
     environment.systemPackages = with pkgs; [
       fluent-bit
