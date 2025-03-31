@@ -26,6 +26,7 @@ with lib;
     ./mtr.nix
     ./nano.nix
     ./ncdu.nix
+    ./openbao.nix
     ./pciutils.nix
     ./psmisc.nix
     ./rsync.nix
