@@ -13,6 +13,7 @@ with lib;
     ./socket-proxy.nix
     ./tinc.nix
     ./traefik.nix
+    ./traefik-internal.nix
     ./unbound.nix
     ./zabbix-proxy.nix
   ];
