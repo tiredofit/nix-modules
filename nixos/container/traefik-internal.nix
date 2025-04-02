@@ -102,7 +102,7 @@ in
       ];
       networks = [
         "services"      # Make this the first network
-        "proxy"
+        "proxy-internal"
         "socket-proxy"
       ];
       autoStart = mkDefault true;
