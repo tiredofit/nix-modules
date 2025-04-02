@@ -55,6 +55,7 @@ in
         description = "Enable monitoring for this container";
       };
     };
+  };
 
   config = mkIf cfg.enable {
     host.feature.virtualization.docker.containers."${container_name}" = {
