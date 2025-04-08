@@ -61,12 +61,12 @@ in
     host.feature.virtualization.docker.containers."${container_name}" = {
       image = "${cfg.image.name}:${cfg.image.tag}";
       labels = {
-        "traefik.constraint" = "proxy-internal";
+        "traefik.proxy.visibility" = "internal";
       };
-      ports = [
-        "80:80"
-        "443:443"
-      ];
+      #ports = [ ## We're already binding this and we want it to be accesible from our internal network.
+      #  "80:80"
+      #  "443:443"
+      #];
       volumes = [
         "/var/local/data/_system/${container_name}/certs:/data/certs"
         "/var/local/data/_system/${container_name}/config:/data/config"
@@ -89,7 +89,7 @@ in
         #"LETSENCRYPT_EMAIL" = "common_env";                                            # hosts/common/secrets/container-internal.env
         #"CF_API_EMAIL" = "1234567890";                                                 # hosts/common/secrets/container-internal.env
         #"CF_API_KEY" = "1234567890";                                                   # hosts/common/secrets/container-internal.env
-        "DASHBOARD_HOSTNAME" = "${hostname}.vpn.${config.host.network.domainname}";     # hosts/common/secrets/container-internal.env
+        "DASHBOARD_HOSTNAME" = "${hostname}.i.${config.host.network.domainname}";     # hosts/common/secrets/container-internal.env
       };
       environmentFiles = [
         config.sops.secrets."common-container-${container_name}".path
@@ -102,7 +102,7 @@ in
       ];
       networks = [
         "services"      # Make this the first network
-        "proxy-internal"
+        "proxy"
         "socket-proxy"
       ];
       autoStart = mkDefault true;
