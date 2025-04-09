@@ -119,6 +119,20 @@ in
                 done
               fi
 
+              sir() {
+                   if [ -z $1 ] || [ -z $2 ] ; then echo "Search inside Replace: sir <find_string_named> <sring_replaced>" ; return 1 ; fi
+                   for file in $(rg -l $1) ; do
+                        sed -i "s|$1|$2|g" "$file"
+                   done
+              }
+
+              far() {
+                   if [ -z $1 ] || [ -z $2 ] ; then echo "Rename files: far <find_file_named> <file_renamed>" ; return 1 ; fi
+                   for file in $(find -name "$1") ; do
+                        mv "$file" $(dirname "$file")/$2
+                   done
+              }
+
               # Quickly run a pkg run nixpkgs - Add a second argument to it otherwise it will simply run the command
               pkgrun () {
                   if [ -n $1 ] ; then
