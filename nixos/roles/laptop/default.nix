@@ -83,6 +83,7 @@ in
     networking = {
       networkmanager= {
         enable = mkDefault true;
+        wifi.backend = mkDefault config.host.hardware.wireless.backend;
       };
     };
   };

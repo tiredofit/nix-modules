@@ -12,6 +12,11 @@ in
         type = with types; bool;
         description = "Enables tools for wireless";
       };
+      backend = mkOption {
+        default = "iwd";
+        type = with types; enum [ "iwd" "wpa_supplicant" ];
+        description = "The backend to use for wireless management";
+      };
     };
   };
 
@@ -25,6 +30,7 @@ in
       iw
     ];
 
-    hardware.wirelessRegulatoryDatabase = true;
+    hardware.wirelessRegulatoryDatabase = mkDefault true;
+    networking.wireless.iwd.enable = mkDefault (cfg.backend == "iwd");
   };
 }
