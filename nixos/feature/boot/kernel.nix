@@ -52,7 +52,7 @@ in
 
       blacklistedKernelModules = [] ++ cfg.modulesBlacklist;
       kernelModules = [] ++ cfg.modules;
-      kernelPackages = pkgs.linuxPackages_latest; ## TODO This should read the value of package pkgs.linuxPackages_${cfg.package} somehow
+      kernelPackages = mkDefault pkgs.linuxPackages_latest; ## TODO This should read the value of package pkgs.linuxPackages_${cfg.package} somehow
       kernelParams = [] ++ cfg.parameters;
     };
   };
