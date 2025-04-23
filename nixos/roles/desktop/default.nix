@@ -83,6 +83,7 @@ in
           fail2ban.enable = mkDefault true;     #
           opensnitch.enable = mkDefault false;  # Only activated by opensnitch-ui
         };
+        manager = mkDefault "networkmanager";
         vpn = {
           tailscale.enable = mkDefault false;
           wireguard.enable = mkDefault true;
@@ -96,12 +97,6 @@ in
           harden = mkDefault true;
         };
         vscode_server.enable = true;
-      };
-    };
-
-    networking = {
-      networkmanager= {
-        enable = mkDefault true;
       };
     };
  };

@@ -65,7 +65,7 @@ in
       systemd-user.makeHomeDir = true;
     };
 
-    systemd.services.nslcd = mkIf config.networking.networkmanager.enable {
+    systemd.services.nslcd = mkIf (host.network.manager == "networkmanager") {
       after = [ "Network-Manager.service" ];
     };
 

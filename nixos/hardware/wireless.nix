@@ -32,11 +32,10 @@ in
 
     hardware.wirelessRegulatoryDatabase = mkDefault true;
 
-    networking.wireless.iwd.enable = mkDefault (cfg.backend == "iwd");
-
-    host.filesystem.impermanence.directories = mkIf ((config.host.filesystem.impermanence.enable) && (config.networking.networkmanager.enable)) [
+    host.filesystem.impermanence.directories = mkIf ((config.host.filesystem.impermanence.enable) && (cfg.backend == "iwd")) [
       "/var/lib/iwd"
-      "/var/lib/NetworkManager"
     ];
+
+    networking.wireless.iwd.enable = mkDefault (cfg.backend == "iwd");
   };
 }

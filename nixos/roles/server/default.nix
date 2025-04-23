@@ -84,6 +84,7 @@ in
       };
       network = {
         firewall.fail2ban.enable = mkDefault true;
+        manager = mkDefault "systemd-networkd";
         wired.enable = mkDefault true;
       };
       service = {
@@ -104,9 +105,6 @@ in
         rejectPackets = mkDefault false;
         logRefusedPackets = mkDefault false;
         logRefusedConnections = mkDefault true;
-      };
-      networkmanager= {
-        enable = mkDefault false;                     # systemd-networkd is cleaner and built in
       };
       useDHCP = mkDefault false;
       useNetworkd = mkDefault false;

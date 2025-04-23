@@ -64,6 +64,7 @@ in
         yubikey.enable = mkDefault true;      #
       };
       network = {
+        manager = mkDefault "networkmanager";
         firewall.fail2ban.enable = mkDefault true;
         vpn = {
           tailscale.enable = mkDefault false;
@@ -77,13 +78,6 @@ in
           enable = mkDefault true;
           harden = mkDefault true;
         };
-      };
-    };
-
-    networking = {
-      networkmanager= {
-        enable = mkDefault true;
-        wifi.backend = mkDefault config.host.hardware.wireless.backend;
       };
     };
   };

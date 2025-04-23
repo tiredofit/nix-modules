@@ -66,6 +66,7 @@ in
         yubikey.enable = mkDefault false;
       };
       network = {
+        manager = mkDefault "networkmanager";
         firewall.fail2ban.enable = mkDefault false;
       };
       service = {
@@ -74,12 +75,6 @@ in
           enable = mkDefault true;
           harden = mkDefault true;
         };
-      };
-    };
-
-    networking = {
-      networkmanager= {
-        enable = mkDefault true;
       };
     };
 
