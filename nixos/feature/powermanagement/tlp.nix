@@ -31,13 +31,13 @@ in
 
           #SOUND_POWER_SAVE_CONTROLLER = "Y";
 
-          START_CHARGE_THRESH_BAT0 = 80;
-          STOP_CHARGE_THRESH_BAT0 = 100;
+          START_CHARGE_THRESH_BAT0 = 70;
+          STOP_CHARGE_THRESH_BAT0 = 80;
 
           RESTORE_THRESHOLDS_ON_BAT = 1;
 
           # battery care drivers
-          #NATACPI_ENABLE = 1;
+          NATACPI_ENABLE = 1;
           TPACPI_ENABLE = 1;
           TPSMAPI_ENABLE = 1;
 
@@ -47,16 +47,16 @@ in
           #DISK_APM_LEVEL_ON_BAT = "128 128";
 
           #DISK_IDLE_SECS_ON_AC=0;
-          DISK_IDLE_SECS_ON_BAT = 2;
+          #DISK_IDLE_SECS_ON_BAT = 2;
 
           #RADEON_DPM_PERF_LEVEL_ON_AC = "auto";
-          RADEON_DPM_PERF_LEVEL_ON_BAT = "low";
+          #RADEON_DPM_PERF_LEVEL_ON_BAT = "auto";
 
           #RADEON_DPM_STATE_ON_AC = "performance";
           #RADEON_DPM_STATE_ON_BAT = "battery";
 
-          RADEON_POWER_PROFILE_ON_AC = "high";
-          RADEON_POWER_PROFILE_ON_BAT = "low";
+          #gRADEON_POWER_PROFILE_ON_AC = "high";
+          #gRADEON_POWER_PROFILE_ON_BAT = "low";
 
           #NMI_WATCHDOG = 0;
 

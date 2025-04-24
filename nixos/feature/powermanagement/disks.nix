@@ -10,7 +10,7 @@ in
       enable = mkOption {
         default = true;
         type = with types; bool;
-        description = "Enables adding disk power managemnet tools";
+        description = "Enables adding disk power management tools";
       };
       platter = mkOption {
         default = true;
