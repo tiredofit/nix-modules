@@ -57,9 +57,6 @@ in
         encryption.enable = mkDefault false;
         impermanence = {
           enable = mkDefault true;
-          directories = [
-
-          ];
         };
         swap = {
           enable = mkDefault true;
