@@ -19,6 +19,8 @@ in
       };
     };
 
+    service.resolved.enable = mkDefault true;
+
     host.filesystem.impermanence.directories = mkIf (config.host.filesystem.impermanence.enable) (
       [
         # Always include these directories if impermanence is enabled
