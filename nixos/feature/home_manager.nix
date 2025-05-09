@@ -1,13 +1,9 @@
-{ config, inputs, outputs, lib, pkgs, ... }:
+{ config, inputs, outputs, lib, pkgs, nixpkgsBranch, ... }:
 let
   cfg = config.host.feature.home-manager;
 in
   with lib;
 {
-  imports = [
-    inputs.home-manager.nixosModules.home-manager
-  ];
-
   options = {
     host.feature.home-manager = {
       enable = mkOption {
@@ -23,6 +19,13 @@ in
       home-manager
     ];
 
-    home-manager.extraSpecialArgs = { inherit inputs outputs; };
+    home-manager = {
+      useGlobalPkgs = true;
+      useUserPackages = true;
+      extraSpecialArgs = {
+        inherit inputs outputs;
+        inherit nixpkgsBranch;
+      };
+    };
   };
 }
