@@ -13,7 +13,7 @@ in
         description = "Enable Firmware Updating support";
       };
       service.enable = mkOption {
-        default = false;
+        default = true;
         type = with types; bool;
         description = "Auto start service";
       };
