@@ -5,7 +5,7 @@ let
   container_description = "Enables reverse proxy container";
   container_image_registry = "docker.io";
   container_image_name = "tiredofit/traefik";
-  container_image_tag = "3.3";
+  container_image_tag = "3.4";
   tcc_container_name = "cloudflare-companion";
   tcc_container_description = "Enables ability to create CNAMEs with traefik container";
   tcc_container_image_registry = "docker.io";
@@ -108,6 +108,7 @@ in
     host.feature.virtualization.docker.containers."${container_name}" = {
       image = "${cfg.image.name}:${cfg.image.tag}";
       ports = [
+        "127.0.0.1:8082:8082
         "80:80"
         "443:443"
       ];
