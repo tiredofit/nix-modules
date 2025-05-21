@@ -101,20 +101,20 @@
             }
           ];
 
-    sops.secrets = {
-      ## Only read these secrets if the secret exists
-      "cdc/${config.host.network.hostname}.yaml" = lib.mkIf (builtins.pathExists "${config.host.configDir}/hosts/${config.host.network.hostname}/secrets/cdc/cdc.yml.enc")  {
-        sopsFile = "${config.host.configDir}/hosts/${config.host.network.hostname}/secrets/cdc/cdc.yml.enc";
-        format = "binary";
-        key = "";
-        restartUnits = [ "container-dns-companion.service" ];
-      };
-      "cdc/shared.yaml" = lib.mkIf (builtins.pathExists "${config.host.configDir}/hosts/common/secrets/cdc/shared.yml.enc")  {
-        sopsFile = "${config.host.configDir}/hosts/common/secrets/cdc/shared.yml.enc";
-        format = "binary";
-        key = "";
-        restartUnits = [ "container-dns-companion.service" ];
+      sops.secrets = {
+        ## Only read these secrets if the secret exists
+        "cdc/${config.host.network.hostname}.yaml" = lib.mkIf (builtins.pathExists "${config.host.configDir}/hosts/${config.host.network.hostname}/secrets/cdc/cdc.yml.enc")  {
+          sopsFile = "${config.host.configDir}/hosts/${config.host.network.hostname}/secrets/cdc/cdc.yml.enc";
+          format = "binary";
+          key = "";
+          restartUnits = [ "container-dns-companion.service" ];
+        };
+        "cdc/shared.yaml" = lib.mkIf (builtins.pathExists "${config.host.configDir}/hosts/common/secrets/cdc/shared.yml.enc")  {
+          sopsFile = "${config.host.configDir}/hosts/common/secrets/cdc/shared.yml.enc";
+          format = "binary";
+          key = "";
+          restartUnits = [ "container-dns-companion.service" ];
+        };
       };
     };
-  };
 }
