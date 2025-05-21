@@ -108,7 +108,6 @@ in
     host.feature.virtualization.docker.containers."${container_name}" = {
       image = "${cfg.image.name}:${cfg.image.tag}";
       ports = [
-        "127.0.0.1:8082:8082
         "80:80"
         "443:443"
       ];
