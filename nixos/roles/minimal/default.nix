@@ -15,6 +15,7 @@ in
           efi.enable = mkDefault false;
           graphical.enable = mkDefault false;
         };
+        #documentation.enable = mkDefault false;
         fonts = {
           enable = mkDefault false;
         };

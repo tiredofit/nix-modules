@@ -11,6 +11,7 @@ with lib;
     ./virtualization
     ./appimage.nix
     ./cross_compilation.nix
+    ./documentation.nix
     ./home_manager.nix
     ./fonts.nix
     ./s3ql.nix

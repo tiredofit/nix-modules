@@ -21,6 +21,12 @@ in
             platform = "aarch64-linux";
           };
         };
+        documentation = {
+          enable = mkDefault true;
+          man = {
+            enable = mkDefault true;
+          };
+        };
         fonts = {
           enable = mkDefault true;
         };

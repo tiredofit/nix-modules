@@ -10,19 +10,13 @@ in
   ];
 
   config = mkIf (role == "vm") {
-    documentation = {                                 # This makes some nix commands not display --help
-      enable = mkDefault false;
-      info.enable = mkDefault false;
-      man.enable = mkDefault false;
-      nixos.enable = mkDefault false;
-    };
-
     host = {
       feature = {
         boot = {
           efi.enable = mkDefault true;
           graphical.enable = mkDefault false;
         };
+        #documentation.enable = mkDefault false;
         graphics = {
           enable = mkDefault false;                   # Maybe if we were doing openCL
         };
