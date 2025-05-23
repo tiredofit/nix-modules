@@ -33,7 +33,7 @@ in
           graphical.enable = mkDefault false;
         };
         documentation = {
-          enable = mkDefault false;
+          enable = mkDefault true;
           man = {
             enable = mkDefault false;
           };
