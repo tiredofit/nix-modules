@@ -33,9 +33,9 @@ in
           graphical.enable = mkDefault false;
         };
         documentation = {
-          enable = mkDefault true;
+          enable = mkDefault false;
           man = {
-            enable = mkDefault true;
+            enable = mkDefault false;
           };
         };
         graphics = {
