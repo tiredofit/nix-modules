@@ -1,15 +1,15 @@
 { config, inputs, lib, pkgs, ... }:
   let
-    cfg = config.host.service.container-dns-companion;
+    cfg = config.host.service.dns-companion;
   in
     with lib;
     {
       imports = [
-        inputs.container-dns-companion.nixosModules.default
+        inputs.dns-companion.nixosModules.default
       ];
 
       options = {
-        host.service.container-dns-companion = {
+        host.service.dns-companion = {
           enable = mkOption {
             default = false;
             type = with types; bool;
@@ -26,14 +26,14 @@
 
           package = mkOption {
             type = with types; package;
-            default = inputs.container-dns-companion.packages.${pkgs.system}.container-dns-companion;
-            description = "Container DNS Companion package to use.";
+            default = inputs.dns-companion.packages.${pkgs.system}.dns-companion;
+            description = "DNS Companion package to use.";
           };
 
           configFile = mkOption {
             type = with types; str;
-            default = "container-dns-companion.yml";
-            description = "File name under /etc to the YAML configuration file for Container DNS Companion.";
+            default = "dns-companion.yml";
+            description = "File name under /etc to the YAML configuration file for DNS Companion.";
           };
 
           defaults = mkOption {
@@ -69,10 +69,10 @@
           include = lib.mkOption {
             type = with types; either str (listOf str);
             default = [
-              config.sops.secrets."cdc/shared.yaml".path
-              config.sops.secrets."cdc/${config.host.network.hostname}.yaml".path
+              config.sops.secrets."dc/shared.yaml".path
+              config.sops.secrets."dc/${config.host.network.hostname}.yaml".path
             ];
-            example = [ "/etc/container-dns-companion/extra1.yml" "/etc/container-dns-companion/extra2.yml" ];
+            example = [ "/etc/dns-companion/extra1.yml" "/etc/dns-companion/extra2.yml" ];
             description = ''
               One or more YAML files to include into the main configuration. Can be a string (single file) or a list of file paths.
             '';
@@ -81,10 +81,10 @@
       };
 
       config = mkIf cfg.enable {
-        services.container-dns-companion =
+        services.dns-companion =
           let
             opt = name: val: def: lib.optionalAttrs (val != def) { "${name}" = val; };
-            defaultPkg = inputs.container-dns-companion.packages.${pkgs.system}.container-dns-companion;
+            defaultPkg = inputs.dns-companion.packages.${pkgs.system}.dns-companion;
           in
           lib.mkMerge [
             (opt "service.enable" cfg.service.enable true)
@@ -103,17 +103,17 @@
 
       sops.secrets = {
         ## Only read these secrets if the secret exists
-        "cdc/${config.host.network.hostname}.yaml" = lib.mkIf (builtins.pathExists "${config.host.configDir}/hosts/${config.host.network.hostname}/secrets/cdc/cdc.yml.enc")  {
-          sopsFile = "${config.host.configDir}/hosts/${config.host.network.hostname}/secrets/cdc/cdc.yml.enc";
+        "dc/${config.host.network.hostname}.yaml" = lib.mkIf (builtins.pathExists "${config.host.configDir}/hosts/${config.host.network.hostname}/secrets/dns-companion/dns-companion.yml.enc")  {
+          sopsFile = "${config.host.configDir}/hosts/${config.host.network.hostname}/secrets/dns-companion/dns-companion.yml.enc";
           format = "binary";
           key = "";
-          restartUnits = [ "container-dns-companion.service" ];
+          restartUnits = [ "dns-companion.service" ];
         };
-        "cdc/shared.yaml" = lib.mkIf (builtins.pathExists "${config.host.configDir}/hosts/common/secrets/cdc/shared.yml.enc")  {
-          sopsFile = "${config.host.configDir}/hosts/common/secrets/cdc/shared.yml.enc";
+        "dc/shared.yaml" = lib.mkIf (builtins.pathExists "${config.host.configDir}/hosts/common/secrets/dns-companion/shared.yml.enc")  {
+          sopsFile = "${config.host.configDir}/hosts/common/secrets/dns-companion/shared.yml.enc";
           format = "binary";
           key = "";
-          restartUnits = [ "container-dns-companion.service" ];
+          restartUnits = [ "dns-companion.service" ];
         };
       };
     };
