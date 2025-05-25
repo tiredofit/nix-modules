@@ -69,8 +69,8 @@
           include = lib.mkOption {
             type = with types; either str (listOf str);
             default = [
-              config.sops.secrets."dc/shared.yaml".path
-              config.sops.secrets."dc/${config.host.network.hostname}.yaml".path
+              config.sops.secrets."dns-companion/shared.yaml".path
+              config.sops.secrets."dns-companion/${config.host.network.hostname}.yaml".path
             ];
             example = [ "/etc/dns-companion/extra1.yml" "/etc/dns-companion/extra2.yml" ];
             description = ''
@@ -103,13 +103,13 @@
 
       sops.secrets = {
         ## Only read these secrets if the secret exists
-        "dc/${config.host.network.hostname}.yaml" = lib.mkIf (builtins.pathExists "${config.host.configDir}/hosts/${config.host.network.hostname}/secrets/dns-companion/dns-companion.yml.enc")  {
+        "dns-companion/${config.host.network.hostname}.yaml" = lib.mkIf (builtins.pathExists "${config.host.configDir}/hosts/${config.host.network.hostname}/secrets/dns-companion/dns-companion.yml.enc")  {
           sopsFile = "${config.host.configDir}/hosts/${config.host.network.hostname}/secrets/dns-companion/dns-companion.yml.enc";
           format = "binary";
           key = "";
           restartUnits = [ "dns-companion.service" ];
         };
-        "dc/shared.yaml" = lib.mkIf (builtins.pathExists "${config.host.configDir}/hosts/common/secrets/dns-companion/shared.yml.enc")  {
+        "dns-companion/shared.yaml" = lib.mkIf (builtins.pathExists "${config.host.configDir}/hosts/common/secrets/dns-companion/shared.yml.enc")  {
           sopsFile = "${config.host.configDir}/hosts/common/secrets/dns-companion/shared.yml.enc";
           format = "binary";
           key = "";
