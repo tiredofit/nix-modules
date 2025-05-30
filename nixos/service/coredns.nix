@@ -28,7 +28,7 @@ in
     services = mkIf cfg.service.enable {
       coredns = {
         enable = mkIf cfg.service.enable;
-        config = ''
+        config = mkDefault ''
            . {
                whoami
              }
