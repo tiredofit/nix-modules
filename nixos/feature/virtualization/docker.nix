@@ -389,7 +389,6 @@ in
         "docker/daemon.json" = {
           text = ''
             {
-              "experimental": true,
               "live-restore": true,
               "shutdown-timeout": 120
             }
@@ -906,9 +905,10 @@ in
 
     virtualisation = {
       docker = {
-        enable = true;
-        enableOnBoot = false;
-        logDriver = "local";
+        enable = mkDefault true;
+        enableOnBoot = mkDefault false;
+        experimental = mkDefault true;
+        logDriver = mkDefault "local";
         storageDriver = docker_storage_driver;
       };
 
