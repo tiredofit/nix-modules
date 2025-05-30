@@ -57,13 +57,150 @@
           polls = mkOption {
             type = with types; attrsOf (attrsOf anything);
             default = {};
-            description = "Poll profiles for service/container discovery.";
+            example = {
+              docker = {
+                type = "docker";
+                api_url = "unix:///var/run/docker.sock";
+                api_auth_user = "";
+                api_auth_pass = "";
+                process_existing = false;
+                expose_containers = false;
+                swarm_mode = false;
+                record_remove_on_stop = false;
+                tls = {
+                  verify = true;
+                  ca = "/etc/docker/certs/ca.pem";
+                  cert = "/etc/docker/certs/cert.pem";
+                  key = "/etc/docker/certs/key.pem";
+                };
+              };
+              traefik = {
+                type = "traefik";
+                api_url = "http://traefik:8080/api/http/routers";
+                api_auth_user = "admin";
+                api_auth_pass = "password";
+                interval = "60s";
+                record_remove_on_stop = true;
+                process_existing = true;
+              };
+              caddy = {
+                type = "caddy";
+                api_url = "http://caddy:2019/config/";
+                api_auth_user = "";
+                api_auth_pass = "";
+                interval = "60s";
+                record_remove_on_stop = true;
+                process_existing = true;
+              };
+              file = {
+                type = "file";
+                source = "/var/lib/dns-companion/records.yaml";
+                format = "yaml";
+                interval = "-1";
+                record_remove_on_stop = true;
+                process_existing = true;
+              };
+              remote = {
+                type = "remote";
+                remote_url = "https://example.com/records.yaml";
+                format = "yaml";
+                interval = "30s";
+                process_existing = true;
+                record_remove_on_stop = true;
+                remote_auth_user = "myuser";
+                remote_auth_pass = "mypassword";
+              };
+              tailscale = {
+                type = "tailscale";
+                api_key = "tskey-api-xxxxx";
+                tailnet = "-";
+                domain = "ts.example.com";
+                interval = "120s";
+                hostname_format = "simple";
+                process_existing = true;
+                record_remove_on_stop = true;
+                filter_type = "online";
+                filter_value = "true";
+              };
+              zerotier = {
+                type = "zerotier";
+                api_url = "https://my.zerotier.com";
+                api_token = "your_api_token";
+                network_id = "your_network_id";
+                domain = "zt.example.com";
+                interval = "60s";
+                online_timeout_seconds = 300;
+                use_address_fallback = true;
+                process_existing = true;
+                record_remove_on_stop = true;
+                filter_type = "online";
+                filter_value = "true";
+              };
+            };
+            description = ''
+              Poll profiles for service/container discovery. Each key is the poller name, and the value is an attribute set of options for that poller
+            '';
           };
 
           domains = mkOption {
             type = with types; attrsOf (attrsOf anything);
             default = {};
-            description = "Domain profiles.";
+            example = {
+              example_com = {
+                name = "example.com";
+                provider = "cloudflare";
+                zone_id = "your_zone_id_here";
+                record = {
+                  type = "A";
+                  ttl = 60;
+                  target = "192.0.2.1";
+                  update_existing = true;
+                  allow_multiple = true;
+                };
+                include_subdomains = [ ];
+                exclude_subdomains = [ "dev" "staging" ];
+              };
+            };
+            description = ''
+              Domain profiles. Each key is the domain profile name, and the value is an attribute set of options for that domain.
+            '';
+          };
+
+          outputs = mkOption {
+            type = with types; attrsOf (attrsOf anything);
+            default = {};
+            example = {
+              hosts_export = {
+                format = "hosts";
+                path = "/etc/hosts.dns-companion";
+                domains = [ "all" ];
+                user = "root";
+                group = "root";
+                mode = 420; # 0644
+                enable_ipv4 = true;
+                enable_ipv6 = false;
+                header_comment = "Managed by DNS Companion";
+              };
+              json_export = {
+                format = "json";
+                path = "/var/lib/dns-companion/records.json";
+                domains = [ "example.com" "test.com" ];
+                user = "dns-companion";
+                group = "dns-companion";
+                mode = 420;
+                generator = "dns-companion-nixos";
+                hostname = "nixos-server";
+                comment = "Exported DNS records";
+                indent = true;
+              };
+            };
+            description = ''
+              Output profile system. Configure multiple independent output profiles
+              that can target specific domains, multiple domains, or all domains ("all").
+
+              Each profile supports format-specific options like SOA records for zone files,
+              metadata for YAML/JSON exports, and file ownership settings.
+            '';
           };
 
           include = lib.mkOption {
@@ -75,6 +212,15 @@
             example = [ "/etc/dns-companion/extra1.yml" "/etc/dns-companion/extra2.yml" ];
             description = ''
               One or more YAML files to include into the main configuration. Can be a string (single file) or a list of file paths.
+              Included files are merged into the main config. Later files override earlier ones.
+            '';
+          };
+
+          format = mkOption {
+            type = with types; str;
+            default = "yaml";
+            description = ''
+              File format for DNS records. Supported: "yaml", "json", "hosts", "zone".
             '';
           };
         };
@@ -95,6 +241,7 @@
             (opt "providers" cfg.providers {})
             (opt "polls" cfg.polls {})
             (opt "domains" cfg.domains {})
+            (opt "outputs" cfg.outputs {})
             (opt "include" cfg.include null)
             {
               enable = cfg.enable;
