@@ -205,10 +205,6 @@
 
           include = lib.mkOption {
             type = with types; either str (listOf str);
-            default = [
-              config.sops.secrets."dns-companion/shared.yaml".path
-              config.sops.secrets."dns-companion/${config.host.network.hostname}.yaml".path
-            ];
             example = [ "/etc/dns-companion/extra1.yml" "/etc/dns-companion/extra2.yml" ];
             description = ''
               One or more YAML files to include into the main configuration. Can be a string (single file) or a list of file paths.
@@ -248,20 +244,20 @@
             }
           ];
 
-      sops.secrets = {
-        ## Only read these secrets if the secret exists
-        "dns-companion/${config.host.network.hostname}.yaml" = lib.mkIf (builtins.pathExists "${config.host.configDir}/hosts/${config.host.network.hostname}/secrets/dns-companion/dns-companion.yml.enc")  {
-          sopsFile = "${config.host.configDir}/hosts/${config.host.network.hostname}/secrets/dns-companion/dns-companion.yml.enc";
-          format = "binary";
-          key = "";
-          restartUnits = [ "dns-companion.service" ];
+        sops.secrets = {
+          ## Only read these secrets if the secret exists
+          "dns-companion/${config.host.network.hostname}.yaml" = lib.mkIf (builtins.pathExists "${config.host.configDir}/hosts/${config.host.network.hostname}/secrets/dns-companion/dns-companion.yml.enc")  {
+            sopsFile = "${config.host.configDir}/hosts/${config.host.network.hostname}/secrets/dns-companion/dns-companion.yml.enc";
+            format = "binary";
+            key = "";
+            restartUnits = [ "dns-companion.service" ];
+          };
+          "dns-companion/shared.yaml" = lib.mkIf (builtins.pathExists "${config.host.configDir}/hosts/common/secrets/dns-companion/shared.yml.enc")  {
+            sopsFile = "${config.host.configDir}/hosts/common/secrets/dns-companion/shared.yml.enc";
+            format = "binary";
+            key = "";
+            restartUnits = [ "dns-companion.service" ];
+          };
         };
-        "dns-companion/shared.yaml" = lib.mkIf (builtins.pathExists "${config.host.configDir}/hosts/common/secrets/dns-companion/shared.yml.enc")  {
-          sopsFile = "${config.host.configDir}/hosts/common/secrets/dns-companion/shared.yml.enc";
-          format = "binary";
-          key = "";
-          restartUnits = [ "dns-companion.service" ];
-        };
-      };
     };
 }
