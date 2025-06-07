@@ -897,6 +897,7 @@ in
 
         if ${pkgs.procps}/bin/pgrep dockerd > /dev/null 2>&1 ; then
             ${dockerBin} network inspect proxy > /dev/null || ${dockerBin} network create proxy --subnet 172.19.0.0/18
+            ${dockerBin} network inspect proxy-internal > /dev/null || ${dockerBin} network create proxy-internal --subnet 172.19.64.0/18
             ${dockerBin} network inspect services >/dev/null || ${dockerBin} network create services --subnet 172.19.128.0/18
             ${dockerBin} network inspect socket-proxy >/dev/null || ${dockerBin} network create socket-proxy --subnet 172.19.192.0/18
         fi
