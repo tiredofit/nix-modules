@@ -132,7 +132,7 @@ in
         "TRAEFIK_USER" = "traefik";
         "LETSENCRYPT_CHALLENGE" = "DNS";
         "LETSENCRYPT_DNS_PROVIDER" = "cloudflare";
-        "DOCKER_CONTEXT" = "Label(`traefik.proxy.visibility`, `public`)"
+        "DOCKER_CONTEXT" = "Label(`traefik.proxy.visibility`, `public`)";
         #"LETSENCRYPT_EMAIL" = "common_env";                                            # hosts/common/secrets/container-traefik.env
         #"CF_API_EMAIL" = "1234567890";                                                 # hosts/common/secrets/container-traefik.env
         #"CF_API_KEY" = "1234567890";                                                   # hosts/common/secrets/container-traefik.env
