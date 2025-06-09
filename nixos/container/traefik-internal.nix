@@ -85,11 +85,12 @@ in
         "TRAEFIK_USER" = "traefik";
         "LETSENCRYPT_CHALLENGE" = "DNS";
         "LETSENCRYPT_DNS_PROVIDER" = "cloudflare";
-
+        "DOCKER_CONTEXT" = "Label(`traefik.proxy.visibility`, `internal`)"
+        "DOCKER_DEFAULT_NETWORK" = "proxy-internal";
         #"LETSENCRYPT_EMAIL" = "common_env";                                            # hosts/common/secrets/container-internal.env
         #"CF_API_EMAIL" = "1234567890";                                                 # hosts/common/secrets/container-internal.env
         #"CF_API_KEY" = "1234567890";                                                   # hosts/common/secrets/container-internal.env
-        "DASHBOARD_HOSTNAME" = "${hostname}.i.${config.host.network.domainname}";     # hosts/common/secrets/container-internal.env
+        "DASHBOARD_HOSTNAME" = "${hostname}.i.${config.host.network.domainname}";       # hosts/common/secrets/container-internal.env
       };
       environmentFiles = [
         config.sops.secrets."common-container-${container_name}".path
@@ -102,7 +103,7 @@ in
       ];
       networks = [
         "services"      # Make this the first network
-        "proxy"
+        "proxy-internal"
         "socket-proxy"
       ];
       autoStart = mkDefault true;
@@ -121,6 +122,7 @@ in
     };
 
     systemd.services."docker-${container_name}" = {
+      after = lib.mkIf services.zerotierone.enable [ "zerotierone.service" ];
       preStart = ''
         if [ ! -d /var/local/data/_system/${container_name}/logs ]; then
             mkdir -p /var/local/data/_system/${container_name}/logs
