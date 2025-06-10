@@ -1571,6 +1571,7 @@ in
               fi
 
               if [ "$2" = "--debug" ]; then
+                set -x
               fi
 
               case "$1" in
