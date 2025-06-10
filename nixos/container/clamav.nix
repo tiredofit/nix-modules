@@ -102,6 +102,11 @@ in
             type = with types; str;
             description = "Interface exclusion pattern";
           };
+          zerotierNetwork = mkOption {
+            default = "";
+            type = with types; str;
+            description = "ZeroTier network ID";
+          };
         };
       };
     };
@@ -132,6 +137,7 @@ in
           method = cfg.ports.tcp.method;
           excludeInterfaces = cfg.ports.tcp.excludeInterfaces;
           excludeInterfacePattern = cfg.ports.tcp.excludeInterfacePattern;
+          zerotierNetwork = cfg.ports.tcp.zerotierNetwork;
         }
       ] else [];
 

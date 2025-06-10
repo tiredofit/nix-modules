@@ -84,7 +84,7 @@ in
           container = mkOption {
             default = 389;
             type = with types; int;
-            description = "Container port for LDAP protocol";
+            description = "Container port for LDAP";
           };
           method = mkOption {
             default = "interface";
@@ -100,6 +100,11 @@ in
             default = "docker|veth|br-|enp|eth|wlan";
             type = with types; str;
             description = "Interface exclusion pattern";
+          };
+          zerotierNetwork = mkOption {
+            default = "";
+            type = with types; str;
+            description = "ZeroTier network ID";
           };
         };
         ldaps = {
@@ -116,7 +121,7 @@ in
           container = mkOption {
             default = 636;
             type = with types; int;
-            description = "Container port for LDAPS protocol";
+            description = "Container port for LDAPS";
           };
           method = mkOption {
             default = "interface";
@@ -132,6 +137,11 @@ in
             default = "docker|veth|br-|enp|eth|wlan";
             type = with types; str;
             description = "Interface exclusion pattern";
+          };
+          zerotierNetwork = mkOption {
+            default = "";
+            type = with types; str;
+            description = "ZeroTier network ID";
           };
         };
       };
@@ -164,6 +174,7 @@ in
             method = cfg.ports.ldap.method;
             excludeInterfaces = cfg.ports.ldap.excludeInterfaces;
             excludeInterfacePattern = cfg.ports.ldap.excludeInterfacePattern;
+            zerotierNetwork = cfg.ports.ldap.zerotierNetwork;
           }
         ] else []) ++
         (if cfg.ports.ldaps.enable then [
@@ -173,6 +184,7 @@ in
             method = cfg.ports.ldaps.method;
             excludeInterfaces = cfg.ports.ldaps.excludeInterfaces;
             excludeInterfacePattern = cfg.ports.ldaps.excludeInterfacePattern;
+            zerotierNetwork = cfg.ports.ldaps.zerotierNetwork;
           }
         ] else []);
 

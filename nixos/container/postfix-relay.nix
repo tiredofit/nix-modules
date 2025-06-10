@@ -84,7 +84,7 @@ in
           container = mkOption {
             default = 25;
             type = with types; int;
-            description = "Container port for SMTP protocol";
+            description = "Container port for SMTP";
           };
           method = mkOption {
             default = "interface";
@@ -101,12 +101,17 @@ in
             type = with types; str;
             description = "Interface exclusion pattern";
           };
+          zerotierNetwork = mkOption {
+            default = "";
+            type = with types; str;
+            description = "ZeroTier network ID";
+          };
         };
         submission = {
           enable = mkOption {
             default = false;
             type = with types; bool;
-            description = "Enable SMTP submission port binding with network detection";
+            description = "Enable submission port binding with network detection";
           };
           host = mkOption {
             default = 587;
@@ -116,7 +121,7 @@ in
           container = mkOption {
             default = 587;
             type = with types; int;
-            description = "Container port for SMTP submission protocol";
+            description = "Container port for submission";
           };
           method = mkOption {
             default = "interface";
@@ -132,6 +137,11 @@ in
             default = "docker|veth|br-|enp|eth|wlan";
             type = with types; str;
             description = "Interface exclusion pattern";
+          };
+          zerotierNetwork = mkOption {
+            default = "";
+            type = with types; str;
+            description = "ZeroTier network ID";
           };
         };
       };
@@ -190,6 +200,7 @@ in
             method = cfg.ports.smtp.method;
             excludeInterfaces = cfg.ports.smtp.excludeInterfaces;
             excludeInterfacePattern = cfg.ports.smtp.excludeInterfacePattern;
+            zerotierNetwork = cfg.ports.smtp.zerotierNetwork;
           }
         ] else []) ++
         (if cfg.ports.submission.enable then [
@@ -199,6 +210,7 @@ in
             method = cfg.ports.submission.method;
             excludeInterfaces = cfg.ports.submission.excludeInterfaces;
             excludeInterfacePattern = cfg.ports.submission.excludeInterfacePattern;
+            zerotierNetwork = cfg.ports.submission.zerotierNetwork;
           }
         ] else []);
 

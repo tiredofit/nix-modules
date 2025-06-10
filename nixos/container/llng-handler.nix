@@ -84,7 +84,7 @@ in
           container = mkOption {
             default = 2884;
             type = with types; int;
-            description = "Container port for LemonLDAP-NG handler socket";
+            description = "Container port for LemonLDAP-NG handler";
           };
           method = mkOption {
             default = "interface";
@@ -100,6 +100,11 @@ in
             default = "docker|veth|br-|enp|eth|wlan";
             type = with types; str;
             description = "Interface exclusion pattern";
+          };
+          zerotierNetwork = mkOption {
+            default = "";
+            type = with types; str;
+            description = "ZeroTier network ID";
           };
         };
       };
@@ -138,6 +143,7 @@ in
           method = cfg.ports.llng.method;
           excludeInterfaces = cfg.ports.llng.excludeInterfaces;
           excludeInterfacePattern = cfg.ports.llng.excludeInterfacePattern;
+          zerotierNetwork = cfg.ports.llng.zerotierNetwork;
         }
       ] else [];
 

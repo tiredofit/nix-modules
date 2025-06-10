@@ -84,7 +84,7 @@ in
           container = mkOption {
             default = 24224;
             type = with types; int;
-            description = "Container port for Fluent Bit forward protocol";
+            description = "Container port for Fluent Bit forward";
           };
           method = mkOption {
             default = "interface";
@@ -92,14 +92,19 @@ in
             description = "IP resolution method";
           };
           excludeInterfaces = mkOption {
-            default = [ "lo" "zt0" ];
+            default = [ "lo" ];
             type = with types; listOf types.str;
             description = "Interfaces to exclude";
           };
           excludeInterfacePattern = mkOption {
-            default = "docker|veth|br-";
+            default = "docker|veth|br-|enp|eth|wlan";
             type = with types; str;
             description = "Interface exclusion pattern";
+          };
+          zerotierNetwork = mkOption {
+            default = "";
+            type = with types; str;
+            description = "ZeroTier network ID";
           };
         };
       };
@@ -131,6 +136,7 @@ in
           method = cfg.ports.forward.method;
           excludeInterfaces = cfg.ports.forward.excludeInterfaces;
           excludeInterfacePattern = cfg.ports.forward.excludeInterfacePattern;
+          zerotierNetwork = cfg.ports.forward.zerotierNetwork;
         }
       ] else [];
 
