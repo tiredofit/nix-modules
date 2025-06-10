@@ -1,14 +1,13 @@
 {config, lib, pkgs, ...}:
 
 let
-  container_name = "fluentbit";
-  container_description = "Enables fluentbit log forwarding container";
+  container_name = "fluent-bit";
+  container_description = "Enables log shipping container";
   container_image_registry = "docker.io";
   container_image_name = "docker.io/tiredofit/alpine";
   container_image_tag = "3.21";
   cfg = config.host.container.${container_name};
   hostname = config.host.network.hostname;
-  activationScript = "system.activationScripts.docker_${container_name}";
 in
   with lib;
 {
@@ -44,83 +43,109 @@ in
         };
       };
       logship = mkOption {
-        default = "true";
-        type = with types; str;
-        description = "Enable monitoring for this container";
+        default = true;
+        type = with types; bool;
+        description = "Enable logshipping for this container";
       };
       monitor = mkOption {
-        default = "true";
-        type = with types; str;
+        default = true;
+        type = with types; bool;
         description = "Enable monitoring for this container";
+      };
+      ports = {
+        forward = {
+          enable = mkOption {
+            default = false;
+            type = with types; bool;
+            description = "Enable Fluent Bit forward port binding with network detection";
+          };
+          host = mkOption {
+            default = 24224;
+            type = with types; int;
+            description = "Host port to bind to";
+          };
+          container = mkOption {
+            default = 24224;
+            type = with types; int;
+            description = "Container port for Fluent Bit forward protocol";
+          };
+          method = mkOption {
+            default = "interface";
+            type = with types; enum [ "interface" "address" "pattern" "zerotier" ];
+            description = "IP resolution method";
+          };
+          excludeInterfaces = mkOption {
+            default = [ "lo" "zt0" ];
+            type = with types; listOf types.str;
+            description = "Interfaces to exclude";
+          };
+          excludeInterfacePattern = mkOption {
+            default = "docker|veth|br-";
+            type = with types; str;
+            description = "Interface exclusion pattern";
+          };
+        };
       };
     };
   };
 
   config = mkIf cfg.enable {
     host.feature.virtualization.docker.containers."${container_name}" = {
-      image = "${cfg.image.name}:${cfg.image.tag}";
+      enable = mkDefault true;
+      containerName = mkDefault "${config.host.network.hostname}-${container_name}";
+
+      image = {
+        name = mkDefault cfg.image.name;
+        tag = mkDefault cfg.image.tag;
+        pullOnStart = mkDefault cfg.image.update;
+        registry = mkDefault cfg.image.registry.host;
+      };
+
+      resources = {
+        memory = {
+          max = mkDefault "1024M";
+        };
+      };
+
+      ports = if cfg.ports.forward.enable then [
+        {
+          host = toString cfg.ports.forward.host;
+          container = toString cfg.ports.forward.container;
+          method = cfg.ports.forward.method;
+          excludeInterfaces = cfg.ports.forward.excludeInterfaces;
+          excludeInterfacePattern = cfg.ports.forward.excludeInterfacePattern;
+        }
+      ] else [];
+
       volumes = [
-        "/var/local/data/_system/${container_name}/logs:/var/log/fluentbit"
+        {
+          source = "/var/local/data/_system/${container_name}/logs";
+          target = "/var/log/fluentbit";
+          createIfMissing = mkDefault true;
+          removeCOW = mkDefault true;
+          permissions = mkDefault "755";
+        }
       ];
+
       environment = {
-        "TIMEZONE" = "America/Vancouver";
-        "CONTAINER_NAME" = "${hostname}-${container_name}";
-        "CONTAINER_ENABLE_MONITORING" = cfg.monitor;
-        "CONTAINER_ENABLE_LOGSHIPPING" = cfg.logship;
+        "TIMEZONE" = mkDefault config.time.timeZone;
+        "CONTAINER_NAME" = mkDefault "${hostname}-${container_name}";
+        "CONTAINER_ENABLE_MONITORING" = toString cfg.monitor;
+        "CONTAINER_ENABLE_LOGSHIPPING" = toString cfg.logship;
 
-        #"FLUENTBIT_OUTPUT" = "LOKI";                         # hosts/common/secrets/container-fluentbit.env
-        #"FLUENTBIT_OUTPUT_LOKI_HOST" = "loki.example.com";   # hosts/common/secrets/container-fluentbit.env
-        #"FLUENTBIT_OUTPUT_LOKI_PORT" = "443";                # hosts/common/secrets/container-fluentbit.env
-        #"FLUENTBIT_OUTPUT_LOKI_TLS" = "TRUE";                # hosts/common/secrets/container-fluentbit.env
-        #"FLUENTBIT_OUTPUT_LOKI_TLS_VERIFY" = "TRUE";         # hosts/common/secrets/container-fluentbit.env
-        #"FLUENTBIT_OUTPUT_LOKI_USER" = "username";           # hosts/<hostname>/secrets/container-fluentbit.env
-        #"FLUENTBIT_OUTPUT_LOKI_PASS" = "password";           # hosts/<hostname>/secrets/container-fluentbit.env
+        "FLUENTBIT_MODE" = mkDefault "FORWARD";
+        "FLUENTBIT_FORWARD_PORT" = toString cfg.ports.forward.container;
       };
-      environmentFiles = [
-        config.sops.secrets."common-container-${container_name}".path
-        config.sops.secrets."host-container-${container_name}".path
-      ];
-      extraOptions = [
-        "--memory=1024M"
-        "--network-alias=${hostname}-${container_name}"
-        "--network-alias=fluent-proxy"
-        "--network-alias=logshipper"
-      ];
-      networks = [
-        "services"
-      ];
-      autoStart = mkDefault true;
-      log-driver = mkDefault "local";
-      login = {
-        registry = cfg.image.registry.host;
-      };
-      pullonStart = cfg.image.update;
-    };
 
-    sops.secrets = {
-      "common-container-${container_name}" = {
-        format = "dotenv";
-        sopsFile = "${config.host.configDir}/hosts/common/secrets/container/container-${container_name}.env";
-        restartUnits = [ "docker-${container_name}.service" ];
+      secrets = {
+        enable = mkDefault true;
+        autoDetect = mkDefault true;
       };
-      "host-container-${container_name}" = {
-        format = "dotenv";
-        sopsFile = "${config.host.configDir}/hosts/${hostname}/secrets/container/container-${container_name}.env";
-        restartUnits = [ "docker-${container_name}.service" ];
-      };
-    };
 
-    systemd.services."docker-${container_name}" = {
-      preStart = ''
-        if [ ! -d /var/local/data/_system/${container_name}/logs ]; then
-            mkdir -p /var/local/data/_system/${container_name}/logs
-            ${pkgs.e2fsprogs}/bin/chattr +C /var/local/data/_system/${container_name}/logs
-        fi
-      '';
-
-      serviceConfig = {
-        StandardOutput = "null";
-        StandardError = "null";
+      networking = {
+        networks = [
+          "services"
+        ];
       };
     };
   };

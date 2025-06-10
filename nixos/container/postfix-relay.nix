@@ -2,13 +2,12 @@
 
 let
   container_name = "postfix-relay";
-  container_description = "Enables SMTP message relay container";
+  container_description = "Enables Postfix mail relay container";
   container_image_registry = "docker.io";
   container_image_name = "docker.io/tiredofit/postfix";
   container_image_tag = "latest";
   cfg = config.host.container.${container_name};
   hostname = config.host.network.hostname;
-  activationScript = "system.activationScripts.docker_${container_name}";
 in
   with lib;
 {
@@ -44,93 +43,155 @@ in
         };
       };
       logship = mkOption {
-        default = "true";
-        type = with types; str;
-        description = "Enable monitoring for this container";
+        default = true;
+        type = with types; bool;
+        description = "Enable logshipping for this container";
       };
       monitor = mkOption {
-        default = "true";
-        type = with types; str;
+        default = true;
+        type = with types; bool;
         description = "Enable monitoring for this container";
+      };
+      ports = {
+        smtp = {
+          enable = mkOption {
+            default = false;
+            type = with types; bool;
+            description = "Enable SMTP port binding with network detection";
+          };
+          host = mkOption {
+            default = 25;
+            type = with types; int;
+            description = "Host port to bind to";
+          };
+          container = mkOption {
+            default = 25;
+            type = with types; int;
+            description = "Container port for SMTP protocol";
+          };
+          method = mkOption {
+            default = "interface";
+            type = with types; enum [ "interface" "address" "pattern" "zerotier" ];
+            description = "IP resolution method";
+          };
+          excludeInterfaces = mkOption {
+            default = [ "lo" ];
+            type = with types; listOf types.str;
+            description = "Interfaces to exclude";
+          };
+          excludeInterfacePattern = mkOption {
+            default = "docker|veth|br-|enp|eth|wlan";
+            type = with types; str;
+            description = "Interface exclusion pattern";
+          };
+        };
+        submission = {
+          enable = mkOption {
+            default = false;
+            type = with types; bool;
+            description = "Enable SMTP submission port binding with network detection";
+          };
+          host = mkOption {
+            default = 587;
+            type = with types; int;
+            description = "Host port to bind to";
+          };
+          container = mkOption {
+            default = 587;
+            type = with types; int;
+            description = "Container port for SMTP submission protocol";
+          };
+          method = mkOption {
+            default = "interface";
+            type = with types; enum [ "interface" "address" "pattern" "zerotier" ];
+            description = "IP resolution method";
+          };
+          excludeInterfaces = mkOption {
+            default = [ "lo" ];
+            type = with types; listOf types.str;
+            description = "Interfaces to exclude";
+          };
+          excludeInterfacePattern = mkOption {
+            default = "docker|veth|br-|enp|eth|wlan";
+            type = with types; str;
+            description = "Interface exclusion pattern";
+          };
+        };
       };
     };
   };
 
   config = mkIf cfg.enable {
     host.feature.virtualization.docker.containers."${container_name}" = {
-      image = "${cfg.image.name}:${cfg.image.tag}";
-      ports = [
-        "127.0.0.1:25:25"
-      ];
+      enable = mkDefault true;
+      containerName = mkDefault "${config.host.network.hostname}-${container_name}";
+
+      image = {
+        name = mkDefault cfg.image.name;
+        tag = mkDefault cfg.image.tag;
+        registry = mkDefault cfg.image.registry.host;
+        pullOnStart = mkDefault cfg.image.update;
+      };
+
+      resources = {
+        memory = {
+          max = mkDefault "256M";
+        };
+      };
+
       volumes = [
-        "/var/local/data/_system/${container_name}/logs:/data"
-        "/var/local/data/_system/${container_name}/logs:/logs"
+        {
+          source = "/var/local/data/_system/${container_name}/logs";
+          target = "/var/log/postfix";
+          createIfMissing = mkDefault true;
+          removeCOW = mkDefault true;
+          permissions = mkDefault "755";
+        }
+        {
+          source = "/var/local/data/_system/${container_name}/data";
+          target = "/data";
+          createIfMissing = mkDefault true;
+          permissions = mkDefault "755";
+        }
       ];
+
       environment = {
-        "TIMEZONE" = "America/Vancouver";
-        "CONTAINER_NAME" = "${hostname}-${container_name}";
-        "CONTAINER_ENABLE_MONITORING" = cfg.monitor;
-        "CONTAINER_ENABLE_LOGSHIPPING" = cfg.logship;
+        "TIMEZONE" = mkDefault config.time.timeZone;
+        "CONTAINER_NAME" = mkDefault "${hostname}-${container_name}";
+        "CONTAINER_ENABLE_MONITORING" = toString cfg.monitor;
+        "CONTAINER_ENABLE_LOGSHIPPING" = toString cfg.logship;
 
-        "MODE" = "RELAY";
-        "SERVER_NAME" = "${hostname}.${config.host.network.domainname}";
-
-        #"ACCEPTED_NETWORKS" = "172.16.0.0/12";   # hosts/common/secrets/container-postfix-relay.env
-
-        #"RELAY_HOST" = "smtp.example.com";       # hosts/common/secrets/container-postfix-relay.env
-        #"RELAY_PORT" = "25";                     # hosts/common/secrets/container-postfix-relay.env
-        #"RELAY_USER"= "username";                # hosts/<hostname>/secrets/container-postfix-relay.env
-        #"RELAY_PASS"= "password";                # hosts/<hostname>/secrets/container-postfix-relay.env
+        "MODE" = mkDefault "RELAY";
+        "SERVER_NAME" = mkDefault "${config.host.network.hostname}.${config.host.network.domainname}";
       };
-      environmentFiles = [
-        config.sops.secrets."common-container-${container_name}".path
-        config.sops.secrets."host-container-${container_name}".path
-      ];
-      extraOptions = [
-        "--memory=256M"
-        "--network-alias=${hostname}-${container_name}"
-      ];
-      networks = [
-        "services"
-      ];
-      autoStart = mkDefault true;
-      log-driver = mkDefault "local";
-      login = {
-        registry = cfg.image.registry.host;
+
+      secrets = {
+        enable = mkDefault true;
+        autoDetect = mkDefault true;
       };
-      pullonStart = cfg.image.update;
-    };
 
-    sops.secrets = {
-      "common-container-${container_name}" = {
-        format = "dotenv";
-        sopsFile = "${config.host.configDir}/hosts/common/secrets/container/container-${container_name}.env";
-        restartUnits = [ "docker-${container_name}.service" ];
-      };
-      "host-container-${container_name}" = {
-        format = "dotenv";
-        sopsFile = "${config.host.configDir}/hosts/${hostname}/secrets/container/container-${container_name}.env";
-        restartUnits = [ "docker-${container_name}.service" ];
-      };
-    };
+      ports =
+        (if cfg.ports.smtp.enable then [
+          {
+            host = toString cfg.ports.smtp.host;
+            container = toString cfg.ports.smtp.container;
+            method = cfg.ports.smtp.method;
+            excludeInterfaces = cfg.ports.smtp.excludeInterfaces;
+            excludeInterfacePattern = cfg.ports.smtp.excludeInterfacePattern;
+          }
+        ] else []) ++
+        (if cfg.ports.submission.enable then [
+          {
+            host = toString cfg.ports.submission.host;
+            container = toString cfg.ports.submission.container;
+            method = cfg.ports.submission.method;
+            excludeInterfaces = cfg.ports.submission.excludeInterfaces;
+            excludeInterfacePattern = cfg.ports.submission.excludeInterfacePattern;
+          }
+        ] else []);
 
-    systemd.services."docker-${container_name}" = {
-      preStart = ''
-        if [ ! -d /var/local/data/_system/${container_name}/logs ]; then
-            mkdir -p /var/local/data/_system/${container_name}/logs
-            ${pkgs.e2fsprogs}/bin/chattr +C /var/local/data/_system/${container_name}/logs
-        fi
-
-        ## This one stores its databases as the same filename so lets disable CoW
-        if [ ! -d /var/local/data/_system/${container_name}/data ]; then
-            mkdir -p /var/local/data/_system/${container_name}/data
-            ${pkgs.e2fsprogs}/bin/chattr +C /var/local/data/_system/${container_name}/data
-        fi
-      '';
-
-      serviceConfig = {
-        StandardOutput = "null";
-        StandardError = "null";
+      networking = {
+        networks = [ "services" ];
       };
     };
   };

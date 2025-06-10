@@ -44,75 +44,117 @@ in
         };
       };
       logship = mkOption {
-        default = "true";
-        type = with types; str;
-        description = "Enable monitoring for this container";
+        default = true;
+        type = with types; bool;
+        description = "Enable logshipping for this container";
       };
       monitor = mkOption {
-        default = "true";
-        type = with types; str;
+        default = true;
+        type = with types; bool;
         description = "Enable monitoring for this container";
+      };
+      ports = {
+        tcp = {
+          enable = mkOption {
+            default = false;
+            type = with types; bool;
+            description = "Enable ClamAV daemon port binding with network detection";
+          };
+          host = mkOption {
+            default = 3310;
+            type = with types; int;
+            description = "Host port to bind to";
+          };
+          container = mkOption {
+            default = 3310;
+            type = with types; int;
+            description = "Container port for ClamAV daemon";
+          };
+          method = mkOption {
+            default = "interface";
+            type = with types; enum [ "interface" "address" "pattern" "zerotier" ];
+            description = "IP resolution method";
+          };
+          excludeInterfaces = mkOption {
+            default = [ "lo" ];
+            type = with types; listOf types.str;
+            description = "Interfaces to exclude";
+          };
+          excludeInterfacePattern = mkOption {
+            default = "docker|veth|br-|enp|eth|wlan";
+            type = with types; str;
+            description = "Interface exclusion pattern";
+          };
+        };
       };
     };
   };
 
   config = mkIf cfg.enable {
     host.feature.virtualization.docker.containers."${container_name}" = {
-      image = "${cfg.image.name}:${cfg.image.tag}";
-      volumes = [
-        "/var/local/data/_system/${container_name}/data/clamav:/data"
-        "/var/local/data/_system/${container_name}/logs:/logs"
-      ];
-      environment = {
-        "TIMEZONE" = "America/Vancouver";
-        "CONTAINER_NAME" = "${hostname}-${container_name}";
-        "CONTAINER_ENABLE_MONITORING" = cfg.monitor;
-        "CONTAINER_ENABLE_LOGSHIPPING" = cfg.logship;
+      enable = mkDefault true;
+      containerName = mkDefault "${config.host.network.hostname}-${container_name}";
 
-        "DEFINITIONS_UPDATE_FREQUENCY" ="60";
-        "ENABLE_ALERT_OLE2_MACROS" = "TRUE";
-        "ENABLE_DETECT_PUA" = "FALSE";
-        "EXCLUDE_PUA" = "Packed,NetTool,PWTool";
+      image = {
+        name = mkDefault cfg.image.name;
+        tag = mkDefault cfg.image.tag;
+        registry = mkDefault cfg.image.registry.host;
+        pullOnStart = mkDefault cfg.image.update;
       };
-      environmentFiles = [
 
-      ];
-      extraOptions = [
-        "--memory=2.5G"
-        "--memory-reservation=512M"
+      resources = {
+        memory = {
+          max = mkDefault "2.5G";
+        };
+      };
 
-        "--network-alias=${hostname}-clamav"
-        "--network-alias=clamav-app"
+      ports = if cfg.ports.tcp.enable then [
+        {
+          host = toString cfg.ports.tcp.host;
+          container = toString cfg.ports.tcp.container;
+          method = cfg.ports.tcp.method;
+          excludeInterfaces = cfg.ports.tcp.excludeInterfaces;
+          excludeInterfacePattern = cfg.ports.tcp.excludeInterfacePattern;
+        }
+      ] else [];
+
+      volumes = [
+        {
+          source = "/var/local/data/_system/${container_name}/data/clamav";
+          target = "/data";
+          createIfMissing = mkDefault true;
+          removeCOW = mkDefault true;
+          permissions = mkDefault "755";
+        }
+        {
+          source = "/var/local/data/_system/${container_name}/logs";
+          target = "/logs";
+          createIfMissing = mkDefault true;
+          removeCOW = mkDefault true;
+          permissions = mkDefault "755";
+        }
       ];
+
+      environment = {
+      "TIMEZONE" = "${config.time.timeZone}";
+      "CONTAINER_NAME" = "${config.host.network.hostname}-${container_name}";
+      "CONTAINER_ENABLE_MONITORING" = toString cfg.monitor;
+      "CONTAINER_ENABLE_LOGSHIPPING" = toString cfg.logship;
+
+      "LISTEN_PORT" = toString cfg.ports.tcp.container;
+      "DEFINITIONS_UPDATE_FREQUENCY" = "60";
+      "ENABLE_ALERT_OLE2_MACROS" = "TRUE";
+      "ENABLE_DETECT_PUA" = "FALSE";
+      "EXCLUDE_PUA" = "Packed,NetTool,PWTool";
+
+
+    };
+
+    networking = {
       networks = [
         "services"
       ];
-      autoStart = mkDefault true;
-      log-driver = mkDefault "local";
-      login = {
-        registry = cfg.image.registry.host;
-      };
-      pullonStart = cfg.image.update;
-    };
-
-    systemd.services."docker-${container_name}" = {
-      preStart = ''
-        if [ ! -d /var/local/data/_system/${container_name}/logs ]; then
-            mkdir -p /var/local/data/_system/${container_name}/logs
-            ${pkgs.e2fsprogs}/bin/chattr +C /var/local/data/_system/${container_name}/logs
-        fi
-
-        ## This one stores its databases as the same filename so lets disable CoW
-        if [ ! -d /var/local/data/_system/${container_name}/data ]; then
-            mkdir -p /var/local/data/_system/${container_name}/data
-            ${pkgs.e2fsprogs}/bin/chattr +C /var/local/data/_system/${container_name}/data
-        fi
-      '';
-
-      serviceConfig = {
-        StandardOutput = "null";
-        StandardError = "null";
-      };
     };
   };
+};
 }

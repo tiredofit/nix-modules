@@ -2,13 +2,12 @@
 
 let
   container_name = "socket-proxy";
-  container_description = "Enables docker.sock proxy container";
+  container_description = "Enables Docker socket proxy container for secure Docker API access";
   container_image_registry = "docker.io";
   container_image_name = "docker.io/tiredofit/socket-proxy";
   container_image_tag = "latest";
   cfg = config.host.container.${container_name};
   hostname = config.host.network.hostname;
-  activationScript = "system.activationScripts.docker_${container_name}";
 in
   with lib;
 {
@@ -44,13 +43,13 @@ in
         };
       };
       logship = mkOption {
-        default = "true";
-        type = with types; str;
-        description = "Enable monitoring for this container";
+        default = true;
+        type = with types; bool;
+        description = "Enable logshipping for this container";
       };
       monitor = mkOption {
-        default = "true";
-        type = with types; str;
+        default = true;
+        type = with types; bool;
         description = "Enable monitoring for this container";
       };
     };
@@ -58,54 +57,57 @@ in
 
   config = mkIf cfg.enable {
     host.feature.virtualization.docker.containers."${container_name}" = {
-      image = "${cfg.image.name}:${cfg.image.tag}";
+      enable = mkDefault true;
+      containerName = mkDefault "${config.host.network.hostname}-${container_name}";
+
+      image = {
+        name = mkDefault cfg.image.name;
+        tag = mkDefault cfg.image.tag;
+        registry = mkDefault cfg.image.registry.host;
+        pullOnStart = mkDefault cfg.image.update;
+      };
+
+      resources = {
+        memory = {
+          max = mkDefault "32M";
+        };
+      };
+
       volumes = [
-        "/var/run/docker.sock:/var/run/docker.sock"
-        "/var/local/data/_system/${container_name}/logs:/logs"
+        {
+          source = "/var/run/docker.sock";
+          target = "/var/run/docker.sock";
+          createIfMissing = mkDefault false;
+        }
+        {
+          source = "/var/local/data/_system/${container_name}/logs";
+          target = "/logs";
+          createIfMissing = mkDefault true;
+          removeCOW = mkDefault true;
+          permissions = mkDefault "755";
+        }
       ];
+
       environment = {
-        "TIMEZONE" = "America/Vancouver";
-        "CONTAINER_NAME" = "${hostname}-${container_name}";
-        "CONTAINER_ENABLE_MONITORING" = cfg.monitor;
-        "CONTAINER_ENABLE_LOGSHIPPING" = cfg.logship;
+        "TIMEZONE" = mkDefault config.time.timeZone;
+        "CONTAINER_NAME" = mkDefault "${hostname}-${container_name}";
+        "CONTAINER_ENABLE_MONITORING" = toString cfg.monitor;
+        "CONTAINER_ENABLE_LOGSHIPPING" = toString cfg.logship;
 
-        "ALLOWED_IPS" = "127.0.0.1,172.19.192.0/18";
-        "ENABLE_READONLY" = "TRUE";
-        "MODE" = "containers,events,networks,ping,services,tasks,version";
+        "ALLOWED_IPS" = mkDefault "127.0.0.1,172.19.192.0/18";
+        "ENABLE_READONLY" = mkDefault "TRUE";
+        "MODE" = mkDefault "containers,events,networks,ping,services,tasks,version";
       };
-      environmentFiles = [
 
+      networking = {
+        networks = [
+          "socket-proxy"
       ];
+      };
+
       extraOptions = [
-        "--cpus=0.000"
-        "--memory=100M"
-        "--memory-reservation=32M"
-        "--network-alias=${hostname}-socket-proxy"
+        "--network-alias=${container_name}"
       ];
-      networks = [
-        "socket-proxy"
-      ];
-
-      autoStart = mkDefault true;
-      log-driver = mkDefault "local";
-      login = {
-        registry = cfg.image.registry.host;
-      };
-      pullonStart = cfg.image.update;
-    };
-
-    systemd.services."docker-${container_name}" = {
-      preStart = ''
-        if [ ! -d /var/local/data/_system/${container_name}/logs ]; then
-            mkdir -p /var/local/data/_system/${container_name}/logs
-            ${pkgs.e2fsprogs}/bin/chattr +C /var/local/data/_system/${container_name}/logs
-        fi
-      '';
-
-      serviceConfig = {
-        StandardOutput = "null";
-        StandardError = "null";
-      };
     };
   };
 }

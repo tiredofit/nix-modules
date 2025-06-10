@@ -2,13 +2,12 @@
 
 let
   container_name = "s3ql";
-  container_description = "Enables S3QL mounted filesystem";
+  container_description = "Enables S3QL filesystem container";
   container_image_registry = "docker.io";
   container_image_name = "docker.io/tiredofit/s3ql";
   container_image_tag = "latest";
   cfg = config.host.container.${container_name};
   hostname = config.host.network.hostname;
-  activationScript = "system.activationScripts.docker_${container_name}";
 in
   with lib;
 {
@@ -44,13 +43,13 @@ in
         };
       };
       logship = mkOption {
-        default = "true";
-        type = with types; str;
-        description = "Enable monitoring for this container";
+        default = true;
+        type = with types; bool;
+        description = "Enable logshipping for this container";
       };
       monitor = mkOption {
-        default = "true";
-        type = with types; str;
+        default = true;
+        type = with types; bool;
         description = "Enable monitoring for this container";
       };
     };
@@ -58,80 +57,78 @@ in
 
   config = mkIf cfg.enable {
     host.feature.virtualization.docker.containers."${container_name}" = {
-      image = "${cfg.image.name}:${cfg.image.tag}";
+      enable = mkDefault true;
+      containerName = mkDefault "${config.host.network.hostname}-${container_name}";
+
+      image = {
+        name = mkDefault cfg.image.name;
+        tag = mkDefault cfg.image.tag;
+        registry = mkDefault cfg.image.registry.host;
+        pullOnStart = mkDefault cfg.image.update;
+      };
+
       volumes = [
-        "/var/local/data/_system/${container_name}/config:/config"
-        "/var/local/data/_system/${container_name}/cache:/cache"
-        "/var/local/data/_system/${container_name}/logs:/logs"
-        "/mnt/s3ql:/data:shared"
+        {
+          source = "/var/local/data/_system/${container_name}/config";
+          target = "/config";
+          createIfMissing = mkDefault true;
+          permissions = mkDefault "755";
+        }
+        {
+          source = "/var/local/data/_system/${container_name}/cache";
+          target = "/cache";
+          createIfMissing = mkDefault true;
+          removeCOW = mkDefault true;  # Cache performance
+          permissions = mkDefault "755";
+        }
+        {
+          source = "/var/local/data/_system/${container_name}/logs";
+          target = "/logs";
+          createIfMissing = mkDefault true;
+          removeCOW = mkDefault true;
+          permissions = mkDefault "755";
+        }
+        {
+          source = "/mnt/${container_name}";
+          target = "/data";
+          options = "shared";
+          createIfMissing = mkDefault false;  # Mount point
+        }
       ];
+
       environment = {
-        "TIMEZONE" = "America/Vancouver";
-        "CONTAINER_NAME" = "${hostname}-${container_name}";
-        "CONTAINER_ENABLE_MONITORING" = cfg.monitor;
-        "CONTAINER_ENABLE_LOGSHIPPING" = cfg.logship;
-
-        #"MODE" = "normal";
-        #
-        #"S3_HOST" = "s3c://s3.region.wasabisys.com:443/bucket";
-        #"S3_KEY_ID" = "id";
-        #"S3_KEY_SECRET" = "secret";
-        #"S3QL_PASS" = "abcdefgh";
-        #
-        #"ENABLE_CACHE" = "TRUE";
-        #"ENABLE_PERSISTENT_CACHE" = "TRUE";
-        #"COMPRESSION"= "none";
-        #"LOG_TYPE" = "FILE";
-        #"DEBUG_MODE" = "FALSE";
-
+        "TIMEZONE" = mkDefault config.time.timeZone;
+        "CONTAINER_NAME" = mkDefault "${hostname}-${container_name}";
+        "CONTAINER_ENABLE_MONITORING" = toString cfg.monitor;
+        "CONTAINER_ENABLE_LOGSHIPPING" = toString cfg.logship;
       };
-      environmentFiles = [
-        config.sops.secrets."host-container-${container_name}".path
-      ];
-      extraOptions = [
-        #"--memory=256M" ## TODO: Map
-        "--network-alias=${hostname}-${container_name}"
-        "--pull=always"
-        "--cap-add=SYS_ADMIN"
-        "--device=/dev/net/tun"
-        "--privileged"
-      ];
-      networks = [
-        "services"
-      ];
-      autoStart = mkDefault true;
-      log-driver = mkDefault "local";
-      login = {
-        registry = cfg.image.registry.host;
+
+      secrets = {
+        enable = mkDefault true;
+        autoDetect = mkDefault true;
       };
-      pullonStart = cfg.image.update;
-    };
 
-    sops.secrets = {
-      "host-container-${container_name}" = {
-        format = "dotenv";
-        sopsFile = "${config.host.configDir}/hosts/${hostname}/secrets/container/container-${container_name}.env";
-        restartUnits = [ "docker-${container_name}.service" ];
+      # Security options for filesystem functionality
+      privileged = mkDefault true;
+
+      capabilities = {
+        add = [
+          "SYS_ADMIN"
+        ];
       };
-    };
 
-    systemd.services."docker-${container_name}" = {
-      preStart = ''
-        if [ ! -d /var/local/data/_system/${container_name}/logs ]; then
-            mkdir -p /var/local/data/_system/${container_name}/logs
-            ${pkgs.e2fsprogs}/bin/chattr +C /var/local/data/_system/${container_name}/logs
-        fi
+      devices = [
+        {
+          host = "/dev/net/tun";
+          container = "/dev/net/tun";
+          permissions = "rwm";
+        }
+      ];
 
-        ## This one stores cache in here so lets disable CoW
-        if [ ! -d /var/local/data/_system/${container_name}/cache ]; then
-            mkdir -p /var/local/data/_system/${container_name}/cache
-            ${pkgs.e2fsprogs}/bin/chattr +C /var/local/data/_system/${container_name}/cache
-        fi
-      '';
-
-      serviceConfig = {
-        StandardOutput = "null";
-        StandardError = "null";
+      networking = {
+        networks = [
+          "services"
+        ];
       };
     };
   };

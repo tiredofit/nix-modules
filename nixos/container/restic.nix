@@ -2,13 +2,12 @@
 
 let
   container_name = "restic";
-  container_description = "Enables Backup container";
+  container_description = "Enables Restic backup container";
   container_image_registry = "docker.io";
   container_image_name = "docker.io/tiredofit/restic";
   container_image_tag = "latest";
   cfg = config.host.container.${container_name};
   hostname = config.host.network.hostname;
-  activationScript = "system.activationScripts.docker_${container_name}";
 in
   with lib;
 {
@@ -44,13 +43,13 @@ in
         };
       };
       logship = mkOption {
-        default = "true";
-        type = with types; str;
-        description = "Enable monitoring for this container";
+        default = true;
+        type = with types; bool;
+        description = "Enable logshipping for this container";
       };
       monitor = mkOption {
-        default = "true";
-        type = with types; str;
+        default = true;
+        type = with types; bool;
         description = "Enable monitoring for this container";
       };
     };
@@ -58,95 +57,67 @@ in
 
   config = mkIf cfg.enable {
     host.feature.virtualization.docker.containers."${container_name}" = {
-      image = "${cfg.image.name}:${cfg.image.tag}";
+      enable = mkDefault true;
+      containerName = mkDefault "${config.host.network.hostname}-${container_name}";
+
+      image = {
+        name = mkDefault cfg.image.name;
+        tag = mkDefault cfg.image.tag;
+        registry = mkDefault cfg.image.registry.host;
+        pullOnStart = mkDefault cfg.image.update;
+      };
+
+      resources = {
+        memory = {
+          max = mkDefault "1G";
+        };
+      };
+
       volumes = [
-        "/var/local/data/_system/${container_name}/cache:/cache"
-        "/var/local/data/_system/${container_name}/logs:/logs"
-        "/var/local/data/_system/${container_name}:/mnt/restic-${container_name}/restore"
-        "/:/rootfs:ro"
+        {
+          source = "/var/local/data/_system/${container_name}/cache";
+          target = "/cache";
+          createIfMissing = mkDefault true;
+          removeCOW = mkDefault true;
+          permissions = mkDefault "755";
+        }
+        {
+          source = "/var/local/data/_system/${container_name}/logs";
+          target = "/logs";
+          createIfMissing = mkDefault true;
+          removeCOW = mkDefault true;
+          permissions = mkDefault "755";
+        }
+        {
+          source = "/var/local/data/_system/${container_name}/restore";
+          target = "/mnt/restic/restore";
+          createIfMissing = mkDefault true;
+          permissions = mkDefault "755";
+        }
+        {
+          source = "/";
+          target = "/rootfs";
+          options = "ro";
+          createIfMissing = mkDefault false;
+        }
       ];
+
       environment = {
-        "TIMEZONE" = "America/Vancouver";
-        "CONTAINER_NAME" = "${hostname}-${container_name}";
-        "CONTAINER_ENABLE_MONITORING" = cfg.monitor;
-        "CONTAINER_ENABLE_LOGSHIPPING" = cfg.logship;
+        "TIMEZONE" = mkDefault config.time.timeZone;
+        "CONTAINER_NAME" = mkDefault "${hostname}-${container_name}";
+        "CONTAINER_ENABLE_MONITORING" = toString cfg.monitor;
+        "CONTAINER_ENABLE_LOGSHIPPING" = toString cfg.logship;
 
-        "MODE" = "BACKUP";
-
-        #"BACKUP01_SNAPSHOT_NAME" = "persist";                                      # hosts/<hostname>/secrets/container-restic.env
-        #"BACKUP01_SNAPSHOT_PATH" = "/rootfs/persist";                              # hosts/<hostname>/secrets/container-restic.env
-        #"BACKUP01_SNAPSHOT_EXCLUDE" = ".snapshots";                                # hosts/<hostname>/secrets/container-restic.env
-        #"BACKUP01_SNAPSHOT_BEGIN" = "+1";                                          # hosts/<hostname>/secrets/container-restic.env
-        #"BACKUP01_SNAPSHOT_INTERVAL" = "60";                                       # hosts/<hostname>/secrets/container-restic.env
-        #"BACKUP01_SNAPSHOT_BLACKOUT_BEGIN" = "0300";                               # hosts/<hostname>/secrets/container-restic.env
-        #"BACKUP01_SNAPSHOT_BLACKOUT_END" = "0500";                                 # hosts/<hostname>/secrets/container-restic.env
-        #"BACKUP01_REPOSITORY_PASS" = "repository_password";                        # hosts/<hostname>/secrets/container-restic.env
-        #"BACKUP01_REPOSITORY_PATH" = "rest:https://host_env:host_env@host_env/";   # hosts/<hostname>/secrets/container-restic.env
-
-        #"BACKUP02_SNAPSHOT_NAME" = "home";
-        #"BACKUP02_SNAPSHOT_PATH" = "/rootfs/home";
-        #"BACKUP02_SNAPSHOT_EXCLUDE" = ".snapshots,.vscode-server,.cache";
-        #"BACKUP02_SNAPSHOT_BEGIN" = "+1";
-        #"BACKUP02_SNAPSHOT_INTERVAL" = "60";
-        #"BACKUP02_SNAPSHOT_BLACKOUT_BEGIN" = "0300";
-        #"BACKUP02_SNAPSHOT_BLACKOUT_END" = "0500";
-        #"BACKUP02_REPOSITORY_PASS" = "repository_password";
-        #"BACKUP02_REPOSITORY_PATH" = "rest:https://host_env:host_env@host_env/";
-
-        #"BACKUP03_SNAPSHOT_NAME" = "var_local";
-        #"BACKUP03_SNAPSHOT_PATH" = "/rootfs/var/local/data";
-        #"BACKUP03_SNAPSHOT_EXCLUDE" = ".snapshots,cache,data/cache,restic/cache,*.db-shm,*.db-wal,*.log.db";
-        #"BACKUP03_SNAPSHOT_BEGIN" = "+1";
-        #"BACKUP03_SNAPSHOT_INTERVAL" = "60";
-        #"BACKUP03_SNAPSHOT_BLACKOUT_BEGIN" = "0300";
-        #"BACKUP03_SNAPSHOT_BLACKOUT_END" = "0500";
-        #"BACKUP03_REPOSITORY_PASS" = "repository_password";
-        #"BACKUP03_REPOSITORY_PATH" = "rest:https://host_env:host_env@host_env/";
+        "MODE" = mkDefault "BACKUP";
       };
-      environmentFiles = [
-        config.sops.secrets."host-container-${container_name}".path
-      ];
-      extraOptions = [
-        #"--memory=256M" ## TODO: Map
-        "--network-alias=${hostname}-${container_name}"
-        "--pull=always"
-      ];
-      networks = [
-        "services"
-      ];
-      autoStart = mkDefault true;
-      log-driver = mkDefault "local";
-      login = {
-        registry = cfg.image.registry.host;
+
+      secrets = {
+        enable = mkDefault true;
+        autoDetect = mkDefault true;
       };
-      pullonStart = cfg.image.update;
-    };
 
-    sops.secrets = {
-      "host-container-${container_name}" = {
-        format = "dotenv";
-        sopsFile = "${config.host.configDir}/hosts/${hostname}/secrets/container/container-${container_name}.env";
-        restartUnits = [ "docker-${container_name}.service" ];
-      };
-    };
-
-    systemd.services."docker-${container_name}" = {
-      preStart = ''
-        if [ ! -d /var/local/data/_system/${container_name}/logs ]; then
-            mkdir -p /var/local/data/_system/${container_name}/logs
-            ${pkgs.e2fsprogs}/bin/chattr +C /var/local/data/_system/${container_name}/logs
-        fi
-
-        ## This one stores cache in here so lets disable CoW
-        if [ ! -d /var/local/data/_system/${container_name}/cache ]; then
-            mkdir -p /var/local/data/_system/${container_name}/cache
-            ${pkgs.e2fsprogs}/bin/chattr +C /var/local/data/_system/${container_name}/cache
-        fi
-      '';
-
-      serviceConfig = {
-        StandardOutput = "null";
-        StandardError = "null";
+      networking = {
+        networks = [ "services" ];
       };
     };
   };
