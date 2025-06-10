@@ -185,7 +185,7 @@ in
             method = cfg.ports.dns.method;
             excludeInterfaces = cfg.ports.dns.excludeInterfaces;
             excludeInterfacePattern = cfg.ports.dns.excludeInterfacePattern;
-            zerotierNetwork = cfg.ports.submission.zerotierNetwork;
+            zerotierNetwork = cfg.ports.dns.zerotierNetwork;
           }
         ] else []) ++
         (if cfg.ports.dns_tcp.enable then [
@@ -196,6 +196,7 @@ in
             method = cfg.ports.dns_tcp.method;
             excludeInterfaces = cfg.ports.dns_tcp.excludeInterfaces;
             excludeInterfacePattern = cfg.ports.dns_tcp.excludeInterfacePattern;
+            zerotierNetwork = cfg.ports.dns_tcp.zerotierNetwork;
           }
         ] else []);
 
