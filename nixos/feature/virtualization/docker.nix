@@ -403,17 +403,31 @@ let
 
     case "${portCfg.method}" in
       "zerotier")
-        if [ -n "${portCfg.zerotierNetwork}" ]; then
+        # Handle file:// prefix for zerotier network ID
+        ZEROTIER_NETWORK="${portCfg.zerotierNetwork}"
+        if [[ "$ZEROTIER_NETWORK" == file://* ]]; then
+          NETWORK_FILE="''${ZEROTIER_NETWORK#file://}"
+          if [ -f "$NETWORK_FILE" ]; then
+            # Read first word of first line from the file
+            ZEROTIER_NETWORK=$(head -n1 "$NETWORK_FILE" | awk '{print $1}')
+            echo "Read ZeroTier network ID from file $NETWORK_FILE: $ZEROTIER_NETWORK"
+          else
+            echo "ERROR: ZeroTier network file not found: $NETWORK_FILE"
+            exit 1
+          fi
+        fi
+
+        if [ -n "$ZEROTIER_NETWORK" ]; then
           if ! ${pkgs.zerotierone}/bin/zerotier-cli -p${toString config.services.zerotierone.port} info >/dev/null 2>&1; then
             echo "ERROR: ZeroTier not running"
             exit 1
           fi
-          NETWORK_INFO=$(${pkgs.zerotierone}/bin/zerotier-cli -p${toString config.services.zerotierone.port} listnetworks | grep "^200 listnetworks" | grep "${portCfg.zerotierNetwork}" || true)
+          NETWORK_INFO=$(${pkgs.zerotierone}/bin/zerotier-cli -p${toString config.services.zerotierone.port} listnetworks | grep "^200 listnetworks" | grep "$ZEROTIER_NETWORK" || true)
           if [ -n "$NETWORK_INFO" ]; then
             IP=$(echo "$NETWORK_INFO" | ${pkgs.gawk}/bin/awk '{print $NF}' | sed 's/\/.*//')
             if [ -n "$IP" ] && [ "$IP" != "-" ]; then
               BINDING_IP_${portCfg.host}="$IP"
-              echo "Found ZeroTier IP for port ${portCfg.host}: $IP"
+              echo "Found ZeroTier IP for port ${portCfg.host}: $IP (network: $ZEROTIER_NETWORK)"
             fi
           fi
         fi
