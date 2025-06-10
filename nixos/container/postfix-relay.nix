@@ -52,6 +52,23 @@ in
         type = with types; bool;
         description = "Enable monitoring for this container";
       };
+      secrets = {
+        enable = mkOption {
+          default = true;
+          type = with types; bool;
+          description = "Enable SOPS secrets for this container";
+        };
+        autoDetect = mkOption {
+          default = true;
+          type = with types; bool;
+          description = "Automatically detect and include common secret files if they exist";
+        };
+        files = mkOption {
+          default = [ ];
+          type = with types; listOf str;
+          description = "List of additional secret file paths to include";
+        };
+      };
       ports = {
         smtp = {
           enable = mkOption {
@@ -165,11 +182,6 @@ in
         "SERVER_NAME" = mkDefault "${config.host.network.hostname}.${config.host.network.domainname}";
       };
 
-      secrets = {
-        enable = mkDefault true;
-        autoDetect = mkDefault true;
-      };
-
       ports =
         (if cfg.ports.smtp.enable then [
           {
@@ -189,6 +201,12 @@ in
             excludeInterfacePattern = cfg.ports.submission.excludeInterfacePattern;
           }
         ] else []);
+
+      secrets = {
+        enable = mkDefault cfg.secrets.enable;
+        autoDetect = mkDefault cfg.secrets.autoDetect;
+        files = mkDefault cfg.secrets.files;
+      };
 
       networking = {
         networks = [ "services" ];

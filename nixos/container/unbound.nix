@@ -52,6 +52,26 @@ in
         type = with types; bool;
         description = "Enable monitoring for this container";
       };
+      secrets = {
+        enable = mkOption {
+          default = false;
+          type = with types; bool;
+          description = "Enable SOPS secrets for this container";
+        };
+        autoDetect = mkOption {
+          default = true;
+          type = with types; bool;
+          description = "Automatically detect and include common secret files if they exist";
+        };
+        files = mkOption {
+          default = [ ];
+          type = with types; listOf str;
+          description = "List of additional secret file paths to include";
+          example = [
+            "../secrets/unbound-config.env.enc"
+          ];
+        };
+      };
       ports = {
         dns = {
           enable = mkOption {
@@ -191,6 +211,12 @@ in
 
         "LISTEN_PORT" = toString cfg.ports.dns.container;
         "ENABLE_IPV6" = mkDefault "FALSE";
+      };
+
+      secrets = {
+        enable = mkDefault cfg.secrets.enable;
+        autoDetect = mkDefault cfg.secrets.autoDetect;
+        files = mkDefault cfg.secrets.files;
       };
 
       networking = {

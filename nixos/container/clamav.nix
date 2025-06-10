@@ -53,6 +53,23 @@ in
         type = with types; bool;
         description = "Enable monitoring for this container";
       };
+      secrets = {
+        enable = mkOption {
+          default = false;
+          type = with types; bool;
+          description = "Enable SOPS secrets for this container";
+        };
+        autoDetect = mkOption {
+          default = true;
+          type = with types; bool;
+          description = "Automatically detect and include common secret files if they exist";
+        };
+        files = mkOption {
+          default = [ ];
+          type = with types; listOf str;
+          description = "List of additional secret file paths to include";
+        };
+      };
       ports = {
         tcp = {
           enable = mkOption {
@@ -136,21 +153,25 @@ in
       ];
 
       environment = {
-      "TIMEZONE" = "${config.time.timeZone}";
-      "CONTAINER_NAME" = "${config.host.network.hostname}-${container_name}";
-      "CONTAINER_ENABLE_MONITORING" = toString cfg.monitor;
-      "CONTAINER_ENABLE_LOGSHIPPING" = toString cfg.logship;
+        "TIMEZONE" = "${config.time.timeZone}";
+        "CONTAINER_NAME" = "${config.host.network.hostname}-${container_name}";
+        "CONTAINER_ENABLE_MONITORING" = toString cfg.monitor;
+        "CONTAINER_ENABLE_LOGSHIPPING" = toString cfg.logship;
 
-      "LISTEN_PORT" = toString cfg.ports.tcp.container;
-      "DEFINITIONS_UPDATE_FREQUENCY" = "60";
-      "ENABLE_ALERT_OLE2_MACROS" = "TRUE";
-      "ENABLE_DETECT_PUA" = "FALSE";
-      "EXCLUDE_PUA" = "Packed,NetTool,PWTool";
+        "LISTEN_PORT" = toString cfg.ports.tcp.container;
+        "DEFINITIONS_UPDATE_FREQUENCY" = "60";
+        "ENABLE_ALERT_OLE2_MACROS" = "TRUE";
+        "ENABLE_DETECT_PUA" = "FALSE";
+        "EXCLUDE_PUA" = "Packed,NetTool,PWTool";
+      };
 
+      secrets = {
+        enable = mkDefault cfg.secrets.enable;
+        autoDetect = mkDefault cfg.secrets.autoDetect;
+        files = mkDefault cfg.secrets.files;
+      };
 
-    };
-
-    networking = {
+      networking = {
       networks = [
         "services"
       ];

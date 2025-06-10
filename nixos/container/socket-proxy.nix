@@ -52,6 +52,23 @@ in
         type = with types; bool;
         description = "Enable monitoring for this container";
       };
+      secrets = {
+        enable = mkOption {
+          default = false;
+          type = with types; bool;
+          description = "Enable SOPS secrets for this container";
+        };
+        autoDetect = mkOption {
+          default = true;
+          type = with types; bool;
+          description = "Automatically detect and include common secret files if they exist";
+        };
+        files = mkOption {
+          default = [ ];
+          type = with types; listOf str;
+          description = "List of additional secret file paths to include";
+        };
+      };
     };
   };
 
@@ -99,10 +116,16 @@ in
         "MODE" = mkDefault "containers,events,networks,ping,services,tasks,version";
       };
 
+      secrets = {
+        enable = mkDefault cfg.secrets.enable;
+        autoDetect = mkDefault cfg.secrets.autoDetect;
+        files = mkDefault cfg.secrets.files;
+      };
+
       networking = {
         networks = [
           "socket-proxy"
-      ];
+        ];
       };
 
       extraOptions = [

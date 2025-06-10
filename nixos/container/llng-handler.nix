@@ -52,6 +52,23 @@ in
         type = with types; bool;
         description = "Enable monitoring for this container";
       };
+      secrets = {
+        enable = mkOption {
+          default = true;
+          type = with types; bool;
+          description = "Enable SOPS secrets for this container";
+        };
+        autoDetect = mkOption {
+          default = true;
+          type = with types; bool;
+          description = "Automatically detect and include common secret files if they exist";
+        };
+        files = mkOption {
+          default = [ ];
+          type = with types; listOf str;
+          description = "List of additional secret file paths to include";
+        };
+      };
       ports = {
         llng = {
           enable = mkOption {
@@ -152,8 +169,9 @@ in
       };
 
       secrets = {
-        enable = mkDefault true;
-        autoDetect = mkDefault true;
+        enable = mkDefault cfg.secrets.enable;
+        autoDetect = mkDefault cfg.secrets.autoDetect;
+        files = mkDefault cfg.secrets.files;
       };
 
       networking = {

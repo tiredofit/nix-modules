@@ -52,6 +52,23 @@ in
         type = with types; bool;
         description = "Enable monitoring for this container";
       };
+      secrets = {
+        enable = mkOption {
+          default = true;
+          type = with types; bool;
+          description = "Enable SOPS secrets for this container";
+        };
+        autoDetect = mkOption {
+          default = true;
+          type = with types; bool;
+          description = "Automatically detect and include common secret files if they exist";
+        };
+        files = mkOption {
+          default = [ ];
+          type = with types; listOf str;
+          description = "List of additional secret file paths to include";
+        };
+      };
       docker = {
         context = mkOption {
           default = "Label(`traefik.proxy.visibility`, `public`)";
@@ -229,11 +246,6 @@ in
         "DASHBOARD_HOSTNAME" = mkDefault "${hostname}.vpn.${config.host.network.domainname}";
       };
 
-      secrets = {
-        enable = mkDefault true;
-        autoDetect = mkDefault true;
-      };
-
       labels = {
         "traefik.proxy.visibility" = "public";
       };
@@ -267,6 +279,12 @@ in
             excludeInterfacePattern = cfg.ports.http3.excludeInterfacePattern;
           }
         ] else []);
+
+      secrets = {
+        enable = mkDefault cfg.secrets.enable;
+        autoDetect = mkDefault cfg.secrets.autoDetect;
+        files = mkDefault cfg.secrets.files;
+      };
 
       networking = {
         networks = [
