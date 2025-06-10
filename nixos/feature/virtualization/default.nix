@@ -2,7 +2,7 @@
 with lib;
 {
   imports = [
-    ./docker.nix
+    #./docker.nix
     ./flatpak.nix
     ./virtd.nix
     ./waydroid.nix
