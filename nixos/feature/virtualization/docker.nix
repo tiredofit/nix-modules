@@ -364,13 +364,13 @@ let
   # Helper functions from containers-fixed.nix
   generateEnvironmentFiles = containerName: cfg:
     let
-      userFiles = cfg.secrets.files;
-      autoDetectedFiles = if cfg.secrets.autoDetect then
+      userFiles = cfg.secrets.files or [];
+      autoDetectedFiles = if (cfg.secrets.enable or false) && (cfg.secrets.autoDetect or false) then
         (lib.optional
-          (builtins.pathExists "${config.host.configDir}/hosts/common/secrets/container/container-${containerName}.env.enc")
+          (builtins.pathExists "${config.host.configDir}/hosts/common/secrets/container/container-${containerName}.env")
           config.sops.secrets."common-container-${containerName}".path) ++
         (lib.optional
-          (builtins.pathExists "${config.host.configDir}/hosts/${hostname}/secrets/container/container-${containerName}.env.enc")
+          (builtins.pathExists "${config.host.configDir}/hosts/${hostname}/secrets/container/container-${containerName}.env")
           config.sops.secrets."host-container-${containerName}".path)
       else [];
     in
@@ -378,20 +378,20 @@ let
 
   generateSOPSSecrets = containerName: cfg:
     let
-      commonSecretExists = builtins.pathExists "${config.host.configDir}/hosts/common/secrets/container/container-${containerName}.env.enc";
-      hostSecretExists = builtins.pathExists "${config.host.configDir}/hosts/${hostname}/secrets/container/container-${containerName}.env.enc";
+      commonSecretExists = builtins.pathExists "${config.host.configDir}/hosts/common/secrets/container/container-${containerName}.env";
+      hostSecretExists = builtins.pathExists "${config.host.configDir}/hosts/${hostname}/secrets/container/container-${containerName}.env";
     in
-    lib.optionalAttrs (cfg.enable && cfg.secrets.enable && cfg.secrets.autoDetect && commonSecretExists) {
+    lib.optionalAttrs ((cfg.enable or false) && (cfg.secrets.enable or false) && (cfg.secrets.autoDetect or false) && commonSecretExists) {
       "common-container-${containerName}" = {
         format = "dotenv";
-        sopsFile = "${config.host.configDir}/hosts/common/secrets/container/container-${containerName}.env.enc";
+        sopsFile = "${config.host.configDir}/hosts/common/secrets/container/container-${containerName}.env";
         restartUnits = [ "docker-${containerName}.service" ];
       };
     } //
-    lib.optionalAttrs (cfg.enable && cfg.secrets.enable && cfg.secrets.autoDetect && hostSecretExists) {
+    lib.optionalAttrs ((cfg.enable or false) && (cfg.secrets.enable or false) && (cfg.secrets.autoDetect or false) && hostSecretExists) {
       "host-container-${containerName}" = {
         format = "dotenv";
-        sopsFile = "${config.host.configDir}/hosts/${hostname}/secrets/container/container-${containerName}.env.enc";
+        sopsFile = "${config.host.configDir}/hosts/${hostname}/secrets/container/container-${containerName}.env";
         restartUnits = [ "docker-${containerName}.service" ];
       };
     };
@@ -542,6 +542,9 @@ let
   mkService = name: container: let
     mkAfter = map (x: "docker-${x}.service") (container.serviceOrder.after or []);
 
+    # Generate environment files (including SOPS secrets)
+    allEnvironmentFiles = (generateEnvironmentFiles name container) ++ (container.environmentFiles or []);
+
     # Convert new container format to old format for compatibility
     convertedContainer = {
       image = "${container.image.name}:${container.image.tag}";
@@ -566,7 +569,7 @@ let
       ports = map (port: "${port.host}:${port.container}") container.ports;
 
       environment = container.environment;
-      environmentFiles = (generateEnvironmentFiles name container) ++ (container.environmentFiles or []);
+      environmentFiles = allEnvironmentFiles;
       labels = container.labels;
       networks = container.networking.networks;
 
@@ -701,6 +704,17 @@ let
         # Generate port arguments
         ${generatePortArgs cfg}
 
+        # Generate environment file arguments
+        ENV_FILE_ARGS=""
+        ${concatMapStringsSep "\n        " (envFile: ''
+          if [ -f "${envFile}" ]; then
+            ENV_FILE_ARGS="$ENV_FILE_ARGS --env-file=${envFile}"
+            echo "Added environment file: ${envFile}"
+          else
+            echo "Warning: Environment file not found: ${envFile}"
+          fi
+        '') ((generateEnvironmentFiles containerName cfg) ++ (cfg.environmentFiles or []))}
+
         exec ${config.virtualisation.docker.package}/bin/docker run --rm --name "$CONTAINER_NAME" \
           ${optionalString (cfg.hostname != null) "--hostname=${cfg.hostname}"} \
           ${optionalString (cfg.workdir or null != null) "--workdir=${cfg.workdir}"} \
@@ -717,7 +731,7 @@ let
           ${concatMapStringsSep " " (net: "--network ${net}") cfg.networking.networks} \
           ${generateVolumeArgs cfg} \
           ${concatMapStringsSep " " (envVar: "--env ${escapeShellArg envVar}") (mapAttrsToList (k: v: "${k}=${v}") cfg.environment)} \
-          ${concatMapStringsSep " " (envFile: "--env-file ${envFile}") ((generateEnvironmentFiles containerName cfg) ++ (cfg.environmentFiles or []))} \
+          $ENV_FILE_ARGS \
           ${optionalString (cfg.networking.dns != null) "--dns=${cfg.networking.dns}"} \
           ${optionalString (cfg.networking.ip != null) "--ip=${cfg.networking.ip}"} \
           ${generateLabelArgs cfg} \
