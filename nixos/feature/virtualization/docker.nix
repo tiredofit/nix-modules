@@ -409,7 +409,7 @@ let
           NETWORK_FILE="''${ZEROTIER_NETWORK#file://}"
           if [ -f "$NETWORK_FILE" ]; then
             # Read first word of first line from the file
-            ZEROTIER_NETWORK=$(head -n1 "$NETWORK_FILE" | awk '{print $1}')
+            ZEROTIER_NETWORK=$(head -n1 "$NETWORK_FILE" | ${pkgs.gawk}/bin/awk '{print $1}')
             echo "Read ZeroTier network ID from file $NETWORK_FILE: $ZEROTIER_NETWORK"
           else
             echo "ERROR: ZeroTier network file not found: $NETWORK_FILE"
