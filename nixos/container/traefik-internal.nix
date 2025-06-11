@@ -142,7 +142,7 @@ in
             type = with types; bool;
             description = "Enable HTTP/3 (UDP) port binding with ZeroTier network detection";
           };
-          host = mkOption {S
+          host = mkOption {
             default = 443;
             type = with types; int;
             description = "Host port to bind to";
