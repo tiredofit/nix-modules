@@ -70,10 +70,10 @@ in
         };
       };
       docker = {
-        context = mkOption {
+        constraint = mkOption {
           default = "Label(`traefik.proxy.visibility`, `internal`)";
           type = with types; str;
-          description = "Docker context filter for Traefik service discovery";
+          description = "Docker constraint filter for Traefik service discovery";
         };
         endpoint = mkOption {
           default = if config.host.container.socket-proxy.enable then "http://socket-proxy:2375" else "unix:///var/run/docker.sock";
@@ -227,7 +227,7 @@ in
         "TRAEFIK_USER" = mkDefault "traefik";
         "LETSENCRYPT_CHALLENGE" = mkDefault "DNS";
         "LETSENCRYPT_DNS_PROVIDER" = mkDefault "cloudflare";
-        "DOCKER_CONTEXT" = cfg.docker.context;
+        "DOCKER_CONSTRAINT" = cfg.docker.constraint;
         "DASHBOARD_HOSTNAME" = mkDefault "${hostname}.internal.${config.host.network.domainname}";
       };
 
