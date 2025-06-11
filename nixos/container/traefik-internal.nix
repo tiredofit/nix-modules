@@ -142,7 +142,7 @@ in
             type = with types; bool;
             description = "Enable HTTP/3 (UDP) port binding with ZeroTier network detection";
           };
-          host = mkOption {
+          host = mkOption {S
             default = 443;
             type = with types; int;
             description = "Host port to bind to";
@@ -227,7 +227,7 @@ in
         "TRAEFIK_USER" = mkDefault "traefik";
         "LETSENCRYPT_CHALLENGE" = mkDefault "DNS";
         "LETSENCRYPT_DNS_PROVIDER" = mkDefault "cloudflare";
-        "DOCKER_CONSTRAINT" = cfg.docker.constraint;
+        "DOCKER_CONSTRAINTS" = cfg.docker.constraint;
         "DASHBOARD_HOSTNAME" = mkDefault "${hostname}.internal.${config.host.network.domainname}";
       };
 
