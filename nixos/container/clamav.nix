@@ -115,7 +115,7 @@ in
   config = mkIf cfg.enable {
     host.feature.virtualization.docker.containers."${container_name}" = {
       enable = mkDefault true;
-      containerName = mkDefault "${config.host.network.hostname}-${container_name}";
+      containerName = mkDefault "${container_name}";
 
       image = {
         name = mkDefault cfg.image.name;
