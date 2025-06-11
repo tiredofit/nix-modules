@@ -242,7 +242,7 @@ in
         "TRAEFIK_USER" = mkDefault "traefik";
         "LETSENCRYPT_CHALLENGE" = mkDefault "DNS";
         "LETSENCRYPT_DNS_PROVIDER" = mkDefault "cloudflare";
-        "DOCKER_CONSTRAINT" = cfg.docker.constraint;
+        "DOCKER_CONSTRAINTS" = cfg.docker.constraint;
         "DASHBOARD_HOSTNAME" = mkDefault "${hostname}.vpn.${config.host.network.domainname}";
       };
 
