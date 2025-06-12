@@ -51,7 +51,7 @@ in
       polkit.enable = true;
     };
 
-    host.filesystem.impermanence.directories = mkIf ((config.host.filesystem.impermanence.enable) && (cfg_client.enable)) [
+    host.filesystem.impermanence.directories = mkIf ((config.host.filesystem.impermanence.enable)) [
       "/var/lib/libvirt"                 # Libvirt
     ];
 
