@@ -301,13 +301,13 @@
             (opt "service.enable" cfg.service.enable true)
             (opt "package" cfg.package defaultPkg)
             (opt "configFile" cfg.configFile null)
-            (opt "defaults" cfg.defaults {})
             (opt "general" cfg.general {})
-            (opt "providers" cfg.providers {})
+            (opt "defaults" cfg.defaults {})
             (opt "polls" cfg.polls {})
+            (opt "providers" cfg.providers {})
+            (opt "api" cfg.api {})
             (opt "domains" cfg.domains {})
             (opt "outputs" cfg.outputs {})
-            (opt "api" cfg.api {})
             (opt "include" finalInclude null)
             {
               enable = cfg.enable;
