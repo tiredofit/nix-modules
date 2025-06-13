@@ -254,17 +254,6 @@
             (opt "include" finalInclude null)
             {
               enable = cfg.enable;
-              include =
-                let
-                  getSecretPath = name:
-                    let attr = [ "sops" "secrets" name "path" ];
-                    in lib.attrByPath attr null config;
-                  secretPaths = [
-                    (getSecretPath "dns-companion/shared.yaml")
-                    (getSecretPath "dns-companion/${config.host.network.hostname}.yaml")
-                  ];
-                in
-                lib.filter (x: x != null) secretPaths;
             }
           ];
 
