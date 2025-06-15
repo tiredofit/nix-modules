@@ -248,14 +248,6 @@
             };
             description = ''
               API server configuration for receiving DNS records from remote dns-companion instances.
-
-              Features:
-              - Bearer token authentication per client
-              - Failed attempt tracking and rate limiting
-              - TLS with optional mutual authentication
-              - Comprehensive security logging
-              - Automatic client expiry and cleanup
-              - Route client data to different output profiles
             '';
           };
 

@@ -3,7 +3,7 @@
 with lib;
 {
   imports = [
-    ./dns-companion.nix
+    #./dns-companion.nix
     ./docker_container_manager.nix
     ./coredns.nix
     ./eternal_terminal.nix
