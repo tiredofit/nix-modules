@@ -90,7 +90,7 @@ in
 
       resources = {
         memory = {
-          max = mkDefault "1G";
+          max = mkDefault "4G";
         };
       };
 
