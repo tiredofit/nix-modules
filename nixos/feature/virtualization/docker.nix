@@ -1309,16 +1309,16 @@ in
 
             if command -v "fzf" &>/dev/null; then
                 # bash into running container
-                alias dbash='c_name=$($dsudo ${config.virtualisation.docker.package}/bin/docker ps --format "table {{.Names}}\t{{.Image}}\t{{ .ID}}\t{{.RunningFor}}" | ${pkgs.gnused}/bin/sed"/NAMES/d" | sort | fzf --tac |  ${pkgs.gawk}/bin/awk '"'"'{print $1;}'"'"') ; echo -e "\e[41m**\e[0m Entering $c_name from $(cat /etc/hostname)" ; $dsudo ${config.virtualisation.docker.package}/bin/docker exec -e COLUMNS=$( tput cols ) -e LINES=$( tput lines ) -it $c_name bash'
+                alias dbash='c_name=$($dsudo ${config.virtualisation.docker.package}/bin/docker ps --format "table {{.Names}}\t{{.Image}}\t{{ .ID}}\t{{.RunningFor}}" | ${pkgs.gnused}/bin/sed "/NAMES/d" | sort | fzf --tac |  ${pkgs.gawk}/bin/awk '"'"'{print $1;}'"'"') ; echo -e "\e[41m**\e[0m Entering $c_name from $(cat /etc/hostname)" ; $dsudo ${config.virtualisation.docker.package}/bin/docker exec -e COLUMNS=$( tput cols ) -e LINES=$( tput lines ) -it $c_name bash'
 
                 # view logs
-                alias dlog='c_name=$($dsudo ${config.virtualisation.docker.package}/bin/docker ps --format "table {{.Names}}\t{{.Image}}\t{{ .ID}}\t{{.RunningFor}}" | ${pkgs.gnused}/bin/sed"/NAMES/d" | sort | fzf --tac |  ${pkgs.gawk}/bin/awk '"'"'{print $1;}'"'"') ; echo -e "\e[41m**\e[0m Viewing $c_name from $(cat /etc/hostname)" ; $dsudo ${config.virtualisation.docker.package}/bin/docker logs $c_name $1'
+                alias dlog='c_name=$($dsudo ${config.virtualisation.docker.package}/bin/docker ps --format "table {{.Names}}\t{{.Image}}\t{{ .ID}}\t{{.RunningFor}}" | ${pkgs.gnused}/bin/sed "/NAMES/d" | sort | fzf --tac |  ${pkgs.gawk}/bin/awk '"'"'{print $1;}'"'"') ; echo -e "\e[41m**\e[0m Viewing $c_name from $(cat /etc/hostname)" ; $dsudo ${config.virtualisation.docker.package}/bin/docker logs $c_name $1'
 
                 # sh into running container
-                alias dsh='c_name=$($dsudo ${config.virtualisation.docker.package}/bin/docker ps --format "table {{.Names}}\t{{.Image}}\t{{ .ID}}\t{{.RunningFor}}" | ${pkgs.gnused}/bin/sed"/NAMES/d" | sort | fzf --tac |  ${pkgs.gawk}/bin/awk '"'"'{print $1;}'"'"') ; echo -e "\e[41m**\e[0m Entering $c_name from $(cat /etc/hostname)" ; $dsudo ${config.virtualisation.docker.package}/bin/docker exec -e COLUMNS=$( tput cols ) -e LINES=$( tput lines ) -it $c_name sh'
+                alias dsh='c_name=$($dsudo ${config.virtualisation.docker.package}/bin/docker ps --format "table {{.Names}}\t{{.Image}}\t{{ .ID}}\t{{.RunningFor}}" | ${pkgs.gnused}/bin/sed "/NAMES/d" | sort | fzf --tac |  ${pkgs.gawk}/bin/awk '"'"'{print $1;}'"'"') ; echo -e "\e[41m**\e[0m Entering $c_name from $(cat /etc/hostname)" ; $dsudo ${config.virtualisation.docker.package}/bin/docker exec -e COLUMNS=$( tput cols ) -e LINES=$( tput lines ) -it $c_name sh'
 
                 # Remove running container
-                alias drm='$dsudo ${config.virtualisation.docker.package}/bin/docker rm $( $dsudo ${config.virtualisation.docker.package}/bin/docker ps --format "table {{.Names}}\t{{.Image}}\t{{ .ID}}\t{{.RunningFor}}" | ${pkgs.gnused}/bin/sed"/NAMES/d" | sort | fzf --tac |  ${pkgs.gawk}/bin/awk '"'"'{print $1;}'"'"' )'
+                alias drm='$dsudo ${config.virtualisation.docker.package}/bin/docker rm $( $dsudo ${config.virtualisation.docker.package}/bin/docker ps --format "table {{.Names}}\t{{.Image}}\t{{ .ID}}\t{{.RunningFor}}" | ${pkgs.gnused}/bin/sed "/NAMES/d" | sort | fzf --tac |  ${pkgs.gawk}/bin/awk '"'"'{print $1;}'"'"' )'
             fi
 
           ### Docker Compose
@@ -1640,19 +1640,19 @@ in
              if [ "$2" != "--help" ] ; then
                  case "$1" in
                      "down" )
-                         arg=$(echo "$@" | ${pkgs.gnused}/bin/sed"s|^$1||g")
+                         arg=$(echo "$@" | ${pkgs.gnused}/bin/sed "s|^$1||g")
                          $dsudo $docker_compose_location down --timeout $DOCKER_COMPOSE_TIMEOUT $arg
                      ;;
                      "restart" )
-                         arg=$(echo "$@" | ${pkgs.gnused}/bin/sed"s|^$1||g")
+                         arg=$(echo "$@" | ${pkgs.gnused}/bin/sed "s|^$1||g")
                          $dsudo $docker_compose_location restart --timeout $DOCKER_COMPOSE_TIMEOUT $arg
                      ;;
                      "stop" )
-                         arg=$(echo "$@" | ${pkgs.gnused}/bin/sed"s|^$1||g")
+                         arg=$(echo "$@" | ${pkgs.gnused}/bin/sed "s|^$1||g")
                          $dsudo $docker_compose_location stop --timeout $DOCKER_COMPOSE_TIMEOUT $arg
                      ;;
                      "up" )
-                         arg=$(echo "$@" | ${pkgs.gnused}/bin/sed"s|^$1||g")
+                         arg=$(echo "$@" | ${pkgs.gnused}/bin/sed "s|^$1||g")
                          $dsudo $docker_compose_location up $arg
                      ;;
                      * )
@@ -1672,7 +1672,7 @@ in
           alias dcrecycle='$dsudo $docker_compose_location down --timeout $DOCKER_COMPOSE_TIMEOUT ; $dsudo $docker_compose_location up -d' # ${config.virtualisation.docker.package}/bin/docker Compose Restart
 
           if [ -n "$1" ] && [ "$1" = "container_tool" ] ; then
-              arg=$(echo "$@" | ${pkgs.gnused}/bin/sed"s|^$1||g")
+              arg=$(echo "$@" | ${pkgs.gnused}/bin/sed "s|^$1||g")
               container_tool $arg
           fi
           '';
