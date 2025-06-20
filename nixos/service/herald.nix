@@ -1,19 +1,19 @@
 { config, inputs, lib, pkgs, ... }:
   let
-    cfg = config.host.service.dns-companion;
+    cfg = config.host.service.herald;
   in
     with lib;
     {
       imports = [
-        inputs.dns-companion.nixosModules.default
+        inputs.herald.nixosModules.default
       ];
 
       options = {
-        host.service.dns-companion = {
+        host.service.herald = {
           enable = mkOption {
             default = false;
             type = with types; bool;
-            description = "Manage DNS records based on DNS servers based on events from Docker or Traefik.";
+            description = "Manage DNS records based on DNS servers based on events from Docker, Traefik, Caddy or other providers.";
           };
 
           service = {
@@ -26,14 +26,14 @@
 
           package = mkOption {
             type = with types; package;
-            default = inputs.dns-companion.packages.${pkgs.system}.dns-companion;
-            description = "DNS Companion package to use.";
+            default = inputs.herald.packages.${pkgs.system}.herald;
+            description = "Herald package to use.";
           };
 
           configFile = mkOption {
             type = with types; str;
-            default = "dns-companion.yml";
-            description = "File name under /etc to the YAML configuration file for DNS Companion.";
+            default = "herald.yml";
+            description = "Path to the YAML configuration file";
           };
 
           defaults = mkOption {
@@ -48,13 +48,7 @@
             description = "General application settings.";
           };
 
-          providers = mkOption {
-            type = with types; attrsOf (attrsOf anything);
-            default = {};
-            description = "DNS provider profiles.";
-          };
-
-          polls = mkOption {
+          inputs = mkOption {
             type = with types; attrsOf (attrsOf anything);
             default = {};
             example = {
@@ -94,7 +88,7 @@
               };
               file = {
                 type = "file";
-                source = "/var/lib/dns-companion/records.yaml";
+                source = "/var/lib/herald/records.yaml";
                 format = "yaml";
                 interval = "-1";
                 record_remove_on_stop = true;
@@ -102,13 +96,13 @@
               };
               remote = {
                 type = "remote";
-                remote_url = "https://example.com/records.yaml";
+                url = "https://example.com/records.yaml";
                 format = "yaml";
                 interval = "30s";
                 process_existing = true;
                 record_remove_on_stop = true;
-                remote_auth_user = "myuser";
-                remote_auth_pass = "mypassword";
+                auth_user = "myuser";
+                auth_pass = "mypassword";
               };
               tailscale = {
                 type = "tailscale";
@@ -119,8 +113,16 @@
                 hostname_format = "simple";
                 process_existing = true;
                 record_remove_on_stop = true;
-                filter_type = "online";
-                filter_value = "true";
+                filter = [
+                  {
+                    type = "online";
+                    conditions = [
+                      {
+                        value = "true";
+                      }
+                    ];
+                  }
+                ];
               };
               zerotier = {
                 type = "zerotier";
@@ -133,36 +135,20 @@
                 use_address_fallback = true;
                 process_existing = true;
                 record_remove_on_stop = true;
-                filter_type = "online";
-                filter_value = "true";
+                filter = [
+                  {
+                    type = "online";
+                    conditions = [
+                      {
+                        value = "true";
+                      }
+                    ];
+                  }
+                ];
               };
             };
             description = ''
-              Poll profiles for service/container discovery. Each key is the poller name, and the value is an attribute set of options for that poller
-            '';
-          };
-
-          domains = mkOption {
-            type = with types; attrsOf (attrsOf anything);
-            default = {};
-            example = {
-              example_com = {
-                name = "example.com";
-                provider = "cloudflare";
-                zone_id = "your_zone_id_here";
-                record = {
-                  type = "A";
-                  ttl = 60;
-                  target = "192.0.2.1";
-                  update_existing = true;
-                  allow_multiple = true;
-                };
-                include_subdomains = [ ];
-                exclude_subdomains = [ "dev" "staging" ];
-              };
-            };
-            description = ''
-              Domain profiles. Each key is the domain profile name, and the value is an attribute set of options for that domain.
+              Input provider configurations for Docker, Traefik, File, Remote, etc.
             '';
           };
 
@@ -170,31 +156,46 @@
             type = with types; attrsOf (attrsOf anything);
             default = {};
             example = {
+              # DNS providers
+              cloudflare = {
+                type = "dns";
+                provider = "cloudflare";
+                api_token = "your_cloudflare_token";
+              };
+              route53 = {
+                type = "dns";
+                provider = "route53";
+                aws_access_key_id = "AKIAIOSFODNN7EXAMPLE";
+                aws_secret_access_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY";
+                aws_region = "us-east-1";
+              };
+              # File outputs
               hosts_export = {
+                type = "file";
                 format = "hosts";
-                path = "/etc/hosts.dns-companion";
-                domains = [ "all" ];
+                path = "/etc/hosts.herald";
                 user = "root";
                 group = "root";
                 mode = 420; # 0644
                 enable_ipv4 = true;
                 enable_ipv6 = false;
-                header_comment = "Managed by DNS Companion";
+                header_comment = "Managed by Herald";
               };
               json_export = {
+                type = "file";
                 format = "json";
-                path = "/var/lib/dns-companion/records.json";
-                domains = [ "example.com" "test.com" ];
-                user = "dns-companion";
-                group = "dns-companion";
+                path = "/var/lib/herald/records.json";
+                user = "herald";
+                group = "herald";
                 mode = 420;
-                generator = "dns-companion-nixos";
+                generator = "herald-nixos";
                 hostname = "nixos-server";
                 comment = "Exported DNS records";
                 indent = true;
               };
+              # Remote aggregation
               send_to_api = {
-                format = "remote";
+                type = "remote";
                 url = "https://dns-master.company.com/api/dns";
                 client_id = "server1";
                 token = "your_bearer_token_here";
@@ -210,13 +211,39 @@
               };
             };
             description = ''
-              Output profile system. Configure multiple independent output profiles
-              that can target specific domains, multiple domains, or all domains ("all").
+              Output configurations for DNS providers, file exports, and remote aggregation.
 
-              Each profile supports format-specific options like SOA records for zone files,
-              metadata for YAML/JSON exports, and file ownership settings.
+              DNS providers use type = "dns" with provider-specific settings.
+              File outputs use type = "file" with format and path settings.
+              Remote outputs use type = "remote" for aggregation servers.
+            '';
+          };
 
-              The remote format allows pushing DNS records to a central aggregation server.
+          domains = mkOption {
+            type = with types; attrsOf (attrsOf anything);
+            default = {};
+            example = {
+              example_com = {
+                name = "example.com";
+                profiles = {
+                  inputs = [ "docker" "traefik" ];
+                  outputs = [ "cloudflare" "json_export" ];
+                };
+                record = {
+                  type = "A";
+                  ttl = 60;
+                  target = "192.0.2.1";
+                  update_existing = true;
+                  allow_multiple = true;
+                };
+                include_subdomains = [ ];
+                exclude_subdomains = [ "dev" "staging" ];
+              };
+            };
+            description = ''
+              Domain configurations with input/output profile associations.
+              Each domain specifies which input providers can create records
+              and which output profiles should process those records.
             '';
           };
 
@@ -241,20 +268,20 @@
                 };
               };
               tls = {
-                cert = "/etc/ssl/certs/dns-companion.crt";
-                key = "/etc/ssl/private/dns-companion.key";
+                cert = "/etc/ssl/certs/herald.crt";
+                key = "/etc/ssl/private/herald.key";
                 ca = "/etc/ssl/ca/client-ca.pem";
               };
             };
             description = ''
-              API server configuration for receiving DNS records from remote dns-companion instances.
+              API server configuration for receiving DNS records from remote herald instances.
             '';
           };
 
           include = lib.mkOption {
             type = with types; nullOr (either str (listOf str));
             default = null;
-            example = [ "/etc/dns-companion/extra1.yml" "/etc/dns-companion/extra2.yml" ];
+            example = [ "/etc/herald/extra1.yml" "/etc/herald/extra2.yml" ];
             description = ''
               One or more YAML files to include into the main configuration. Can be a string (single file) or a list of file paths.
               Included files are merged into the main config. Later files override earlier ones.
@@ -273,18 +300,17 @@
       };
 
       config = mkIf cfg.enable {
-        services.dns-companion =
+        services.herald =
           let
             opt = name: val: def: lib.optionalAttrs (val != def) { "${name}" = val; };
-            defaultPkg = inputs.dns-companion.packages.${pkgs.system}.dns-companion;
+            defaultPkg = inputs.herald.packages.${pkgs.system}.herald;
 
-            # Build include list from user config and existing SOPS secrets
             includeFiles = let
               userIncludes = if cfg.include != null then (if builtins.isList cfg.include then cfg.include else [ cfg.include ]) else [];
-              sopsIncludes = lib.optionals (builtins.pathExists "${config.host.configDir}/hosts/common/secrets/dns-companion/shared.yml.enc")
-                [ config.sops.secrets."dns-companion/shared.yaml".path ]
-                ++ lib.optionals (builtins.pathExists "${config.host.configDir}/hosts/${config.host.network.hostname}/secrets/dns-companion/dns-companion.yml.enc")
-                [ config.sops.secrets."dns-companion/${config.host.network.hostname}.yaml".path ];
+              sopsIncludes = lib.optionals (builtins.pathExists "${config.host.configDir}/hosts/common/secrets/herald/shared.yml.enc")
+                [ config.sops.secrets."herald/shared.yaml".path ]
+                ++ lib.optionals (builtins.pathExists "${config.host.configDir}/hosts/${config.host.network.hostname}/secrets/herald/herald.yml.enc")
+                [ config.sops.secrets."herald/${config.host.network.hostname}.yaml".path ];
             in userIncludes ++ sopsIncludes;
 
             finalInclude = if includeFiles == [] then null else includeFiles;
@@ -292,14 +318,13 @@
           lib.mkMerge [
             (opt "service.enable" cfg.service.enable true)
             (opt "package" cfg.package defaultPkg)
-            (opt "configFile" cfg.configFile null)
+            (opt "configFile" cfg.configFile "herald.yml")
             (opt "general" cfg.general {})
             (opt "defaults" cfg.defaults {})
-            (opt "polls" cfg.polls {})
-            (opt "providers" cfg.providers {})
-            (opt "api" cfg.api {})
-            (opt "domains" cfg.domains {})
+            (opt "inputs" cfg.inputs {})
             (opt "outputs" cfg.outputs {})
+            (opt "domains" cfg.domains {})
+            (opt "api" cfg.api {})
             (opt "include" finalInclude null)
             {
               enable = cfg.enable;
@@ -308,17 +333,17 @@
 
       sops.secrets = {
         ## Only read these secrets if the secret exists
-        "dns-companion/${config.host.network.hostname}.yaml" = lib.mkIf (builtins.pathExists "${config.host.configDir}/hosts/${config.host.network.hostname}/secrets/dns-companion/dns-companion.yml.enc")  {
-          sopsFile = "${config.host.configDir}/hosts/${config.host.network.hostname}/secrets/dns-companion/dns-companion.yml.enc";
+        "herald/${config.host.network.hostname}.yaml" = lib.mkIf (builtins.pathExists "${config.host.configDir}/hosts/${config.host.network.hostname}/secrets/herald/herald.yml.enc")  {
+          sopsFile = "${config.host.configDir}/hosts/${config.host.network.hostname}/secrets/herald/herald.yml.enc";
           format = "binary";
           key = "";
-          restartUnits = [ "dns-companion.service" ];
+          restartUnits = [ "herald.service" ];
         };
-        "dns-companion/shared.yaml" = lib.mkIf (builtins.pathExists "${config.host.configDir}/hosts/common/secrets/dns-companion/shared.yml.enc")  {
-          sopsFile = "${config.host.configDir}/hosts/common/secrets/dns-companion/shared.yml.enc";
+        "herald/shared.yaml" = lib.mkIf (builtins.pathExists "${config.host.configDir}/hosts/common/secrets/herald/shared.yml.enc")  {
+          sopsFile = "${config.host.configDir}/hosts/common/secrets/herald/shared.yml.enc";
           format = "binary";
           key = "";
-          restartUnits = [ "dns-companion.service" ];
+          restartUnits = [ "herald.service" ];
         };
       };
     };
