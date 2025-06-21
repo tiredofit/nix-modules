@@ -110,6 +110,12 @@ in
 
         ${metrics_cleanup}
       '';
+      serviceConfig = {
+        Restart = "always";
+        RestartSec = 10;
+      };
+      startLimitIntervalSec = 300;
+      startLimitBurst = 50;
     };
 
     sops.secrets = {
@@ -127,10 +133,5 @@ in
         restartUnits = [ "zerotierone.service" ];
       };
     };
-
-    ### Not really necessary with above work
-    #host.filesystem.impermanence.directories = lib.mkIf config.host.filesystem.impermanence.enable [
-    #  "/var/cache/zerotier-one"
-    #];
   };
 }
