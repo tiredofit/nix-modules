@@ -15,6 +15,6 @@ with lib;
     ./syncthing.nix
     ./vscode_server.nix
     ./zabbix_agent.nix
-    ./zt-dns-manager.nix
+    #./zt-dns-manager.nix
   ];
 }
