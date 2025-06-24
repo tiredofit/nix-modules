@@ -75,7 +75,7 @@ in
           enable = mkOption {
             default = false;
             type = with types; bool;
-            description = "Enable coredns daemon port binding with network detection";
+            description = "Enable CoreDNS port binding with network detection";
           };
           host = mkOption {
             default = 53;
@@ -122,7 +122,7 @@ in
           container = mkOption {
             default = 53;
             type = with types; int;
-            description = "Container port for CoreDNS;"
+            description = "Container port for CoreDNS";
           };
           method = mkOption {
             default = "interface";
