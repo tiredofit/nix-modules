@@ -3,6 +3,7 @@
 with lib;
 {
   imports = [
+    ./coredns.nix
     ./clamav.nix
     ./fluentbit.nix
     ./llng-handler.nix
