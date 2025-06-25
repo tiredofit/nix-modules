@@ -501,8 +501,6 @@ let
     ${concatMapStringsSep "\n    " (portCfg: ''
       if [ "${if portCfg.enable then "true" else "false"}" = "true" ]; then
         echo "Processing port ${portCfg.host} with enable=${if portCfg.enable then "true" else "false"}"
-        echo "BINDING_IP_80 value: $BINDING_IP_80"
-        echo "BINDING_IP_443 value: $BINDING_IP_443"
         case "${portCfg.host}" in
           "80")
             IP="$BINDING_IP_80"
