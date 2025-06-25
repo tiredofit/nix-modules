@@ -175,6 +175,7 @@ in
             excludeInterfaces = cfg.ports.tcp.excludeInterfaces;
             excludeInterfacePattern = cfg.ports.tcp.excludeInterfacePattern;
             zerotierNetwork = cfg.ports.tcp.zerotierNetwork;
+            protocol = "tcp";
           }
         ] else []) ++
         (if cfg.ports.udp.enable then [
@@ -185,6 +186,7 @@ in
             excludeInterfaces = cfg.ports.udp.excludeInterfaces;
             excludeInterfacePattern = cfg.ports.udp.excludeInterfacePattern;
             zerotierNetwork = cfg.ports.udp.zerotierNetwork;
+            protocol = "udp";
           }
         ] else []);
 
@@ -210,8 +212,6 @@ in
         "CONTAINER_NAME" = mkDefault "${hostname}-${container_name}";
         "CONTAINER_ENABLE_MONITORING" = toString cfg.monitor;
         "CONTAINER_ENABLE_LOGSHIPPING" = toString cfg.logship;
-        "TCP_LISTEN_PORT" = toString cfg.ports.tcp.container;
-        "UDP_LISTEN_PORT" = toString cfg.ports.udp.container;
       };
 
       secrets = {
