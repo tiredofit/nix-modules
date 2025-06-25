@@ -8,7 +8,6 @@ let
   container_image_tag = "latest";
   cfg = config.host.container.${container_name};
   hostname = config.host.network.hostname;
-  activationScript = "system.activationScripts.docker_${container_name}";
 in
   with lib;
 {
@@ -55,7 +54,7 @@ in
       };
       secrets = {
         enable = mkOption {
-          default = false;
+          default = true;
           type = with types; bool;
           description = "Enable SOPS secrets for this container";
         };
@@ -145,7 +144,6 @@ in
             description = "ZeroTier network ID";
           };
         };
-
       };
     };
   };
@@ -168,16 +166,27 @@ in
         };
       };
 
-      ports = if cfg.ports.tcp.enable then [
-        {
-          host = toString cfg.ports.tcp.host;
-          container = toString cfg.ports.tcp.container;
-          method = cfg.ports.tcp.method;
-          excludeInterfaces = cfg.ports.tcp.excludeInterfaces;
-          excludeInterfacePattern = cfg.ports.tcp.excludeInterfacePattern;
-          zerotierNetwork = cfg.ports.tcp.zerotierNetwork;
-        }
-      ] else [];
+      ports =
+        (if cfg.ports.tcp.enable then [
+          {
+            host = toString cfg.ports.tcp.host;
+            container = toString cfg.ports.tcp.container;
+            method = cfg.ports.tcp.method;
+            excludeInterfaces = cfg.ports.tcp.excludeInterfaces;
+            excludeInterfacePattern = cfg.ports.tcp.excludeInterfacePattern;
+            zerotierNetwork = cfg.ports.tcp.zerotierNetwork;
+          }
+        ] else []) ++
+        (if cfg.ports.udp.enable then [
+          {
+            host = toString cfg.ports.udp.host;
+            container = toString cfg.ports.udp.container;
+            method = cfg.ports.udp.method;
+            excludeInterfaces = cfg.ports.udp.excludeInterfaces;
+            excludeInterfacePattern = cfg.ports.udp.excludeInterfacePattern;
+            zerotierNetwork = cfg.ports.udp.zerotierNetwork;
+          }
+        ] else []);
 
       volumes = [
         {
@@ -197,12 +206,12 @@ in
       ];
 
       environment = {
-        "TIMEZONE" = "${config.time.timeZone}";
-        "CONTAINER_NAME" = "${config.host.network.hostname}-${container_name}";
+        "TIMEZONE" = mkDefault config.time.timeZone;
+        "CONTAINER_NAME" = mkDefault "${hostname}-${container_name}";
         "CONTAINER_ENABLE_MONITORING" = toString cfg.monitor;
         "CONTAINER_ENABLE_LOGSHIPPING" = toString cfg.logship;
-
-        "LISTEN_PORT" = toString cfg.ports.tcp.container;
+        "TCP_LISTEN_PORT" = toString cfg.ports.tcp.container;
+        "UDP_LISTEN_PORT" = toString cfg.ports.udp.container;
       };
 
       secrets = {
@@ -212,10 +221,10 @@ in
       };
 
       networking = {
-      networks = [
-        "services"
-      ];
+        networks = [
+          "services"
+        ];
+      };
     };
   };
-};
 }
