@@ -354,6 +354,27 @@ let
         default = [ ];
         description = "Port bindings with optional network-specific IP binding";
       };
+
+      login = mkOption {
+        type = types.nullOr (types.submodule {
+          options = {
+            registry = mkOption {
+              type = types.str;
+              description = "Registry host";
+            };
+            username = mkOption {
+              type = types.str;
+              description = "Registry username";
+            };
+            passwordFile = mkOption {
+              type = types.path;
+              description = "Path to file containing registry password";
+            };
+          };
+        });
+        default = null;
+        description = "Registry login credentials for this container";
+      };
     };
   });
 
@@ -626,6 +647,15 @@ let
       preStart = ''
         # Prepare volumes
         ${generateVolumePrep container}
+
+        ${lib.optionalString (
+          container.login != null &&
+          container.login.username != null &&
+          container.login.passwordFile != null &&
+          container.login.registry != null
+        ) ''
+          ${pkgs.coreutils}/bin/cat ${container.login.passwordFile} | ${config.virtualisation.docker.package}/bin/docker login ${container.login.registry} --username ${container.login.username} --password-stdin
+        ''}
       '';
 
       serviceConfig = {
@@ -1310,10 +1340,10 @@ in
                 alias dbash='c_name=$($dsudo ${config.virtualisation.docker.package}/bin/docker ps --format "table {{.Names}}\t{{.Image}}\t{{ .ID}}\t{{.RunningFor}}" | ${pkgs.gnused}/bin/sed "/NAMES/d" | sort | fzf --tac |  ${pkgs.gawk}/bin/awk '"'"'{print $1;}'"'"') ; echo -e "\e[41m**\e[0m Entering $c_name from $(cat /etc/hostname)" ; $dsudo ${config.virtualisation.docker.package}/bin/docker exec -e COLUMNS=$( tput cols ) -e LINES=$( tput lines ) -it $c_name bash'
 
                 # view logs
-                alias dlog='c_name=$($dsudo ${config.virtualisation.docker.package}/bin/docker ps --format "table {{.Names}}\t{{.Image}}\t{{ .ID}}\t{{.RunningFor}}" | ${pkgs.gnused}/bin/sed "/NAMES/d" | sort | fzf --tac |  ${pkgs.gawk}/bin/awk '"'"'{print $1;}'"'"') ; echo -e "\e[41m**\e[0m Viewing $c_name from $(cat /etc/hostname)" ; $dsudo ${config.virtualisation.docker.package}/bin/docker logs $c_name $1'
+                alias dlog='c_name=$($dsudo ${config.virtualisation.docker.package}/bin/docker ps --format "table {{.Names}}\t{{.Image}}\t{{ .ID}}\t{{.RunningFor}}" | ${pkgs.gnused}/bin/sed "/NAMES/d" | sort | fzf --tac |  ${pkgs.gnused}/bin/awk '"'"'{print $1;}'"'"') ; echo -e "\e[41m**\e[0m Viewing $c_name from $(cat /etc/hostname)" ; $dsudo ${config.virtualisation.docker.package}/bin/docker logs $c_name $1'
 
                 # sh into running container
-                alias dsh='c_name=$($dsudo ${config.virtualisation.docker.package}/bin/docker ps --format "table {{.Names}}\t{{.Image}}\t{{ .ID}}\t{{.RunningFor}}" | ${pkgs.gnused}/bin/sed "/NAMES/d" | sort | fzf --tac |  ${pkgs.gawk}/bin/awk '"'"'{print $1;}'"'"') ; echo -e "\e[41m**\e[0m Entering $c_name from $(cat /etc/hostname)" ; $dsudo ${config.virtualisation.docker.package}/bin/docker exec -e COLUMNS=$( tput cols ) -e LINES=$( tput lines ) -it $c_name sh'
+                alias dsh='c_name=$($dsudo ${config.virtualisation.docker.package}/bin/docker ps --format "table {{.Names}}\t{{.Image}}\t{{ .ID}}\t{{.RunningFor}}" | ${pkgs.gnused}/bin/sed "/NAMES/d" | sort | fzf --tac |  ${pkgs.gnused}/bin/awk '"'"'{print $1;}'"'"') ; echo -e "\e[41m**\e[0m Entering $c_name from $(cat /etc/hostname)" ; $dsudo ${config.virtualisation.docker.package}/bin/docker exec -e COLUMNS=$( tput cols ) -e LINES=$( tput lines ) -it $c_name sh'
 
                 # Remove running container
                 alias drm='$dsudo ${config.virtualisation.docker.package}/bin/docker rm $( $dsudo ${config.virtualisation.docker.package}/bin/docker ps --format "table {{.Names}}\t{{.Image}}\t{{ .ID}}\t{{.RunningFor}}" | ${pkgs.gnused}/bin/sed "/NAMES/d" | sort | fzf --tac |  ${pkgs.gawk}/bin/awk '"'"'{print $1;}'"'"' )'
@@ -1447,9 +1477,9 @@ in
               }
 
               ct_stop_stack () {
-                  stacks=$($docker_compose_location ls | tail -n +2 |  ${pkgs.gawk}/bin/awk '{print $1}')
+                  stacks=$($docker_compose_location ls | tail -n +2 |  ${pkgs.gnused}/bin/awk '{print $1}')
                   for stack in $stacks; do
-                      stack_image=$($docker_compose_location -p $stack images | tail -n +2 |  ${pkgs.gawk}/bin/awk '{print $1,$2}' | grep "db-backup")
+                      stack_image=$($docker_compose_location -p $stack images | tail -n +2 |  ${pkgs.gnused}/bin/awk '{print $1,$2}' | grep "db-backup")
                           if [ "$1" != "nobackup" ] ; then
                               if [[ $stack_image =~ .*"db-backup".* ]] ; then
                                   stack_container_name=$(echo "$stack_image" |  ${pkgs.gawk}/bin/awk '{print $1}')
@@ -1563,7 +1593,7 @@ in
 
               if [ "$#" -gt 2 ] || { [ "$#" -eq 2 ] && [ "$2" != "--debug" ]; } then
                   echo $"Usage:"
-                  echo "  $0 {core|applications|apps|pull|--all}"
+                  echo "  $0 {core|applications|shutdown|pull|apps|--all}"
                   echo "  $0 -h|--help"
                   exit 1
               fi
@@ -1729,4 +1759,3 @@ in
     ];
   };
 }
-
