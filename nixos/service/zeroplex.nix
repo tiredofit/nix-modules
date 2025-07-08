@@ -146,6 +146,31 @@ in
               default = true;
               description = "Restore original DNS settings for all managed interfaces on exit.";
             };
+            watchdog_ip = mkOption {
+              type = types.nullOr types.str;
+              default = null;
+              description = "IP address to ping for DNS watchdog (default: first DNS server from ZeroTier config).";
+            };
+            watchdog_hostname = mkOption {
+              type = types.nullOr types.str;
+              default = null;
+              description = "DNS hostname to resolve for DNS watchdog (optional, enables hostname mode).";
+            };
+            watchdog_expected_ip = mkOption {
+              type = types.nullOr types.str;
+              default = null;
+              description = "Expected IP address for resolved hostname (optional, for split-horizon/hijack detection).";
+            };
+            watchdog_interval = mkOption {
+              type = types.str;
+              default = "1m";
+              description = "Interval for DNS watchdog ping (e.g., 1m).";
+            };
+            watchdog_backoff = mkOption {
+              type = types.listOf types.str;
+              default = [ "10s" "20s" "30s" ];
+              description = "Backoff intervals after failed ping (e.g., [10s 20s 30s]).";
+            };
           };
         };
         default = {
@@ -153,6 +178,11 @@ in
           add_reverse_domains = false;
           multicast_dns = false;
           restore_on_exit = false;
+          watchdog_ip = null;
+          watchdog_hostname = null;
+          watchdog_expected_ip = null;
+          watchdog_interval = "1m";
+          watchdog_backoff = [ "10s" "20s" "30s" ];
         };
         description = "Feature toggles.";
       };
