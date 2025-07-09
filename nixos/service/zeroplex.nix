@@ -106,7 +106,7 @@ in
             };
             port = mkOption {
               type = types.int;
-              default = cfg.host.network.vpn.zerotier.port;
+              default = config.host.network.vpn.zerotier.port;
               description = "ZeroTier client port number.";
             };
             token_file = mkOption {
