@@ -84,13 +84,8 @@ in
              address = mkIf (cfg.type == "static") [
                cfg.ip
              ];
-             #dns = mkIf (cfg.type == "static") [ ## TODO FIX THIS
-             #  "1.1.1.1"
-             #  "1.0.0.1"
-             #];
-             #dns = mkIf (cfg.type == "static") [
-             #
-             #] ++ cfg.dns ;
+             dns = mkIf (cfg.type == "static") [
+             ] ++ cfg.dns ;
              routes = mkIf (cfg.type == "static") [{
                 Gateway = cfg.gateway;
                 GatewayOnLink = true;
