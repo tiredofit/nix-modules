@@ -210,8 +210,8 @@ in
       environment = {
         "TIMEZONE" = mkDefault config.time.timeZone;
         "CONTAINER_NAME" = mkDefault "${hostname}-${container_name}";
-        "CONTAINER_ENABLE_MONITORING" = toString cfg.monitor;
-        "CONTAINER_ENABLE_LOGSHIPPING" = toString cfg.logship;
+        "CONTAINER_ENABLE_MONITORING" = if cfg.monitor then "true" else "false";
+        "CONTAINER_ENABLE_LOGSHIPPING" = if cfg.logship then "true" else "false";
       };
 
       secrets = {
