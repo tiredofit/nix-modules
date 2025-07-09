@@ -41,7 +41,7 @@ with lib;
 
       xserver = {
         displayManager = {
-          gdm = {
+          gdm = lib.mkIf (lib.versionOlder lib.version "25.05") {
             enable = mkForce false;
           };
           lightdm = {
@@ -49,6 +49,10 @@ with lib;
           };
           startx.enable = config.services.xserver.enable;
         };
+      };
+      # For NixOS 25.11 and later, use the new option name
+      displayManager = lib.mkIf (lib.versionAtLeast lib.version "25.11pre") {
+        gdm.enable = mkForce false;
       };
     };
   };
