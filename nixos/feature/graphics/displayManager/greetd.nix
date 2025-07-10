@@ -19,10 +19,6 @@ with lib;
     };
   };
 
-  imports = lib.optionals (lib.versionOlder lib.version "25.11pre") [
-    (lib.mkAliasOptionModule ["services" "displayManager" "gdm" "enable"] ["services" "xserver" "displayManager" "gdm" "enable" ])
-  ];
-
   config = mkIf (config.host.feature.graphics.displayManager.manager == "greetd") {
     security.pam.services.greetd.enableGnomeKeyring = true;
 
