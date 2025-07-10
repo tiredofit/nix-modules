@@ -548,13 +548,21 @@ let
         echo "Port ${portCfg.host} not enabled, using default binding"
       fi
     '') cfg.ports}
-    echo "Final PORT_ARGS: $PORT_ARGS"
   '';
 
   # Generate label arguments
   generateLabelArgs = cfg: concatMapStringsSep " " (labelArg: labelArg)
     (mapAttrsToList (k: v:
-      "--label='${k}=${v}'"
+      let
+        val =
+          if builtins.isBool v then
+            if v then "true" else "false"
+          else if builtins.isInt v then
+            toString v
+          else
+            v;
+      in
+      "--label='${k}=${val}'"
     ) cfg.labels);
 
   # Generate device arguments
@@ -1692,6 +1700,7 @@ in
           alias dcu='$dsudo $docker_compose_location up'                                                                                   # Docker-Compose Up
           alias dcud='$dsudo $docker_compose_location up -d'                                                                               # Docker-Compose Daemonize
           alias dcd='$dsudo $docker_compose_location down --timeout $DOCKER_COMPOSE_TIMEOUT'                                               # Docker-Compose Down
+
           alias dcl='$dsudo $docker_compose_location logs -f'                                                                              # ${config.virtualisation.docker.package}/bin/docker Compose Logs
           alias dcrecycle='$dsudo $docker_compose_location down --timeout $DOCKER_COMPOSE_TIMEOUT ; $dsudo $docker_compose_location up -d' # ${config.virtualisation.docker.package}/bin/docker Compose Restart
 
