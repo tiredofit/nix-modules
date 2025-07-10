@@ -9,6 +9,10 @@ let
 in
 
 {
+  imports = lib.optionals (lib.versionOlder lib.version "25.11pre") [
+    (lib.mkAliasOptionModule ["services" "displayManager" "gdm" "enable"] ["services" "xserver" "displayManager" "gdm" "enable" ])
+  ];
+
   config = mkIf (graphics.enable && graphics.displayManager.manager == "gdm") {
     services = {
       xserver = {

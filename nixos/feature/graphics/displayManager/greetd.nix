@@ -19,6 +19,10 @@ with lib;
     };
   };
 
+  imports = lib.optionals (lib.versionOlder lib.version "25.11pre") [
+    (lib.mkAliasOptionModule ["services" "displayManager" "gdm" "enable"] ["services" "xserver" "displayManager" "gdm" "enable" ])
+  ];
+
   config = mkIf (config.host.feature.graphics.displayManager.manager == "greetd") {
     security.pam.services.greetd.enableGnomeKeyring = true;
 
@@ -41,7 +45,7 @@ with lib;
 
       xserver = {
         displayManager = {
-          gdm = lib.mkIf (lib.versionOlder lib.version "25.05") {
+          gdm = {
             enable = mkForce false;
           };
           lightdm = {
@@ -49,10 +53,6 @@ with lib;
           };
           startx.enable = config.services.xserver.enable;
         };
-      };
-      # For NixOS 25.11 and later, use the new option name
-      displayManager = lib.mkIf (lib.versionAtLeast lib.version "25.11pre") {
-        gdm.enable = mkForce false;
       };
     };
   };
