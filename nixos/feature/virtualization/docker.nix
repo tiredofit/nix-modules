@@ -554,11 +554,7 @@ let
   # Generate label arguments
   generateLabelArgs = cfg: concatMapStringsSep " " (labelArg: labelArg)
     (mapAttrsToList (k: v:
-      let
-        # Escape backticks in the value
-        escapedValue = builtins.replaceStrings ["`"] ["\\`"] v;
-      in
-      "--label='${k}=${escapedValue}'"
+      "--label='${k}=${v}'"
     ) cfg.labels);
 
   # Generate device arguments

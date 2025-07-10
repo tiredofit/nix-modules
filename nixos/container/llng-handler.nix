@@ -132,7 +132,7 @@ in
       labels = {
         "traefik.enable" = "true";
         "traefik.http.routers.${hostname}-llng-handler.rule" = "Host(`${hostname}.handler.auth.${config.host.network.domainname}`)";
-        "traefik.http.services.${hostname}-llng-handler.loadbalancer.server.port" = "${toString cfg.ports.llng.container}";
+        "traefik.http.services.${hostname}-llng-handler.loadbalancer.server.port" = toString cfg.ports.llng.container;
         "traefik.proxy.visibility" = "public";
       };
 
