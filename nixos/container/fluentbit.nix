@@ -170,6 +170,10 @@ in
         networks = [
           "services"
         ];
+        networkAliases = mkDefault [
+          "fluent-proxy"
+        ];
+        enableDefaultNetworkAlias = mkDefault true;
       };
     };
   };

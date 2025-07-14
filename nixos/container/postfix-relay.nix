@@ -222,6 +222,9 @@ in
 
       networking = {
         networks = [ "services" ];
+        enableDefaultNetworkAlias = mkDefault true;
+        networkAliases = mkDefault [
+        ];
       };
     };
   };

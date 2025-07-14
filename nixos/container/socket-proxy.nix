@@ -126,11 +126,10 @@ in
         networks = [
           "socket-proxy"
         ];
+        enableDefaultNetworkAlias = mkDefault true;
+        networkAliases = mkDefault [
+        ];
       };
-
-      extraOptions = [
-        "--network-alias=${container_name}"
-      ];
     };
   };
 }

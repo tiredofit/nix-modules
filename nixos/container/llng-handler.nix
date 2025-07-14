@@ -185,6 +185,9 @@ in
           "services"
           "proxy"
         ];
+        enableDefaultNetworkAlias = mkDefault true;
+        networkAliases = mkDefault [
+        ];
       };
     };
   };

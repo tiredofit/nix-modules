@@ -293,6 +293,9 @@ in
           "socket-proxy"
         ];
       };
+        enableDefaultNetworkAlias = mkDefault true;
+        networkAliases = mkDefault [
+        ];
     };
   };
 }

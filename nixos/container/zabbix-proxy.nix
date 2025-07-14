@@ -174,6 +174,9 @@ in
       networking = {
         networks = [ "services" ];
         dns = "172.19.153.53";  # Use unbound
+        enableDefaultNetworkAlias = mkDefault true;
+        networkAliases = mkDefault [
+        ];
       };
     };
   };

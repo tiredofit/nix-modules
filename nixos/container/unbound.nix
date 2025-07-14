@@ -231,11 +231,11 @@ in
           "services"
         ];
         ip = mkDefault "172.19.153.53";  # Fixed IP for DNS
+        enableDefaultNetworkAlias = mkDefault true;
+        networkAliases = mkDefault [
+          "${container_name}-app"
+        ];
       };
-
-      extraOptions = [
-        "--network-alias=${container_name}-app"
-      ];
     };
   };
 }
