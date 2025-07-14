@@ -225,7 +225,6 @@ in
           "services"
         ];
         networkAliases = mkDefault [
-          "fluent-proxy"
         ];
         enableDefaultNetworkAlias = mkDefault true;
       };
