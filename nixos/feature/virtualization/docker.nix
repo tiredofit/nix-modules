@@ -76,6 +76,18 @@ let
           default = null;
           description = "Fixed IP address for container (requires custom network)";
         };
+        aliases = {
+          default = mkOption {
+            type = types.bool;
+            default = true;
+            description = "Whether to add the default network alias of ${hostname}-${name}.";
+          };
+          extra = mkOption {
+            type = types.listOf types.str;
+            default = [];
+            description = "Additional network aliases for the container (in addition to the default).";
+          };
+        };
       };
 
       volumes = mkOption {
@@ -252,18 +264,6 @@ let
         description = "Container hostname (if null, no hostname is set)";
       };
 
-      # Network alias options
-      networkAliases = mkOption {
-        type = types.listOf types.str;
-        default = [];
-        description = "Additional network aliases for the container (in addition to the default).";
-      };
-      enableDefaultNetworkAlias = mkOption {
-        type = types.bool;
-        default = true;
-        description = "Whether to add the default network alias of ${hostname}-${name}.";
-      };
-
       # Service ordering
       serviceOrder = {
         after = mkOption {
@@ -379,6 +379,12 @@ let
         });
         default = null;
         description = "Registry login credentials for this container";
+      };
+
+      containerName = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Custom name for the container (defaults to attribute name if null)";
       };
     };
   });
@@ -636,10 +642,10 @@ let
           ) container.devices)
         ++ (if !(elem "host" container.networking.networks)
             then (
-              (if container.enableDefaultNetworkAlias
+              (if container.networking.aliases.default or false
                 then [ "--network-alias=${hostname}-${name}" ]
                 else [])
-              ++ (map (alias: "--network-alias=${alias}") container.networkAliases)
+              ++ (map (alias: "--network-alias=${alias}") (container.networking.aliases.extra or []))
             )
             else []);
 
@@ -784,7 +790,8 @@ let
           ${concatMapStringsSep " " (cap: "--cap-add=${cap}") cfg.capabilities.add} \
           ${concatMapStringsSep " " (cap: "--cap-drop=${cap}") cfg.capabilities.drop} \
           ${generateDeviceArgs cfg} \
-          ${optionalString (!(elem "host" cfg.networking.networks)) "--network-alias=${hostname}-${containerName}"} \
+          ${optionalString (!(elem "host" cfg.networking.networks) && (cfg.networking.aliases.default or false)) "--network-alias=${hostname}-${containerName}"} \
+          ${concatMapStringsSep " " (alias: "--network-alias=${alias}") (cfg.networking.aliases.extra or [])} \
           ${concatMapStringsSep " " (net: "--network ${net}") cfg.networking.networks} \
           ${generateVolumeArgs cfg} \
           ${concatMapStringsSep " " (envVar: "--env ${escapeShellArg envVar}") (mapAttrsToList (k: v: "${k}=${v}") cfg.environment)} \
@@ -1695,7 +1702,6 @@ in
                          $dsudo $docker_compose_location stop --timeout $DOCKER_COMPOSE_TIMEOUT $arg
                      ;;
                      "up" )
-                         arg=$(echo "$@" | ${pkgs.gnused}/bin/s
                          arg=$(echo "$@" | ${pkgs.gnused}/bin/sed "s|^$1||g")
                          $dsudo $docker_compose_location up $arg
                      ;;
@@ -1703,11 +1709,14 @@ in
                          $dsudo $docker_compose_location ''${@}
                      ;;
                 esac
+
+
              fi
           }
 
           alias container-tool=container_tool
-          alias dpull='$dsudo ${config.virtualisation.docker.package}/bin/docker pull'                                                                                                 # ${config.virtualisation.docker.package}/bin/docker Pull
+          alias dpull='$dsudo ${config.virtualisation.docker.package}/bin/docker pull'                                                                                                                                                                 # ${config.virtualisation.docker.package}/bin/docker Pull
+
           alias dcpull='$dsudo docker-compose pull'                                                                                        # Docker-Compose Pull
           alias dcu='$dsudo $docker_compose_location up'                                                                                   # Docker-Compose Up
           alias dcud='$dsudo $docker_compose_location up -d'                                                                               # Docker-Compose Daemonize
