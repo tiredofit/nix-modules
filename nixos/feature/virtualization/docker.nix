@@ -252,11 +252,16 @@ let
         description = "Container hostname (if null, no hostname is set)";
       };
 
-      containerName = mkOption {
-        type = types.nullOr types.str;
-        default = null;
-        description = "Override the container name (defaults to attribute name)";
-        example = "my-custom-container-name";
+      # Network alias options
+      networkAliases = mkOption {
+        type = types.listOf types.str;
+        default = [];
+        description = "Additional network aliases for the container (in addition to the default).";
+      };
+      enableDefaultNetworkAlias = mkOption {
+        type = types.bool;
+        default = true;
+        description = "Whether to add the default network alias of ${hostname}-${name}.";
       };
 
       # Service ordering
@@ -629,8 +634,14 @@ let
             in
             "--device=${fullDeviceString}"
           ) container.devices)
-        # Only add network alias if not using host networking
-        ++ optional (!(elem "host" container.networking.networks)) "--network-alias=${hostname}-${name}";
+        ++ (if !(elem "host" container.networking.networks)
+            then (
+              (if container.enableDefaultNetworkAlias
+                then [ "--network-alias=${hostname}-${name}" ]
+                else [])
+              ++ (map (alias: "--network-alias=${alias}") container.networkAliases)
+            )
+            else []);
 
       login = {
         username = null;
@@ -1258,7 +1269,7 @@ in
         interactiveShellInit = ''
           ### Docker
 
-            if [ -n "$XDG_CONFIG_HOME" ] ; then
+
                 export DOCKER_CONFIG="$XDG_CONFIG_HOME/docker"
             else
                 export DOCKER_CONFIG="$HOME/.config/docker"
@@ -1273,7 +1284,7 @@ in
                 dsudo='sudo'
             fi
 
-            alias dpsa="$dsudo docker_ps -a"                                               # Get process included stop container
+            alias dpsa="$dsudo docker_ps -a"                                                                                           # Get process included stop container
             alias di="$dsudo ${config.virtualisation.docker.package}/bin/docker images"                                                # Get images
             alias dki="$dsudo ${config.virtualisation.docker.package}/bin/docker run -it -P"                                           # Run interactive container, e.g., $dki base /bin/bash
             alias dex="$dsudo ${config.virtualisation.docker.package}/bin/docker exec -it"                                             # Execute interactive container, e.g., $dex base /bin/bash
@@ -1684,6 +1695,7 @@ in
                          $dsudo $docker_compose_location stop --timeout $DOCKER_COMPOSE_TIMEOUT $arg
                      ;;
                      "up" )
+                         arg=$(echo "$@" | ${pkgs.gnused}/bin/s
                          arg=$(echo "$@" | ${pkgs.gnused}/bin/sed "s|^$1||g")
                          $dsudo $docker_compose_location up $arg
                      ;;
