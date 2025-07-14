@@ -173,10 +173,9 @@ in
 
       networking = {
         networks = [ "services" ];
-        dns = "172.19.153.53";  # Use unbound
+        dns = mkIf config.host.container.unbound.enable (config.host.feature.virtualization.docker.containers.unbound.networking.ip);
         enableDefaultNetworkAlias = mkDefault true;
-        networkAliases = mkDefault [
-        ];
+        networkAliases = mkDefault [ ];
       };
     };
   };
