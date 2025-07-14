@@ -274,9 +274,10 @@ in
           "proxy-internal"
           "socket-proxy"
         ];
-        enableDefaultNetworkAlias = mkDefault true;
-        networkAliases = mkDefault [
-        ];
+        aliases = {
+          default = mkDefault true;
+          extra = mkDefault [ ];
+        };
       };
     };
   };

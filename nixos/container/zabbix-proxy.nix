@@ -172,12 +172,14 @@ in
       };
 
       networking = {
-        networks = [ "services" ];
-        dns = mkIf config.host.container.unbound.enable (config.host.feature.virtualization.docker.containers.unbound.networking.ip);
-        enableDefaultNetworkAlias = mkDefault true;
-        networkAliases = mkDefault [
-
+        networks = [
+          "services"
         ];
+        dns = mkIf config.host.container.unbound.enable (config.host.feature.virtualization.docker.containers.unbound.networking.ip);
+        aliases = {
+          default = mkDefault true;
+          extra = mkDefault [ ];
+        };
       };
     };
   };

@@ -151,9 +151,10 @@ in
         networks = [
           "services"
         ];
-        enableDefaultNetworkAlias = mkDefault true;
-        networkAliases = mkDefault [
-        ];
+        aliases = {
+          default = mkDefault true;
+          extra = mkDefault [ ];
+        };
       };
     };
   };

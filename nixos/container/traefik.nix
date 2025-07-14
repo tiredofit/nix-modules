@@ -292,10 +292,12 @@ in
           "proxy"
           "socket-proxy"
         ];
+        aliases = {
+          default = mkDefault true;
+          extra = mkDefault [ ];
+        };
       };
-        enableDefaultNetworkAlias = mkDefault true;
-        networkAliases = mkDefault [
-        ];
+
     };
   };
 }
