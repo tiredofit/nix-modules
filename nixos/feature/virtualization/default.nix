@@ -1,8 +1,7 @@
-{config, lib, ...}:
-with lib;
+{...}:
 {
   imports = [
-    ./docker.nix
+    ./docker
     ./flatpak.nix
     ./virtd.nix
     ./waydroid.nix
