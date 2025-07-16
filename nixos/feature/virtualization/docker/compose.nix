@@ -23,7 +23,8 @@ in
 
         export DOCKER_COMPOSE_TIMEOUT=${toString config.host.feature.virtualization.docker.daemon.shutdownTimeout}
         export DOCKER_COMPOSE_TIMEOUT=''${DOCKER_TIMEOUT:-"120"}
-        docker_compose_location="${pkgs.unstable.docker-compose}/bin/docker-compose"
+        docker_bin_location="$(which docker)"
+        docker_compose_bin_location="$(which docker-compose)"
 
         if id -nG "$USER" | grep -qw "docker" || [ $(id -u) = "0" ]; then
           dsudo=""
@@ -56,7 +57,7 @@ in
           for stack_dir in "$@" ; do
             if [ ! -f "$stack_dir"/.norestart ]; then
               echo "**** [container-tool] [pull] Pulling Images - $stack_dir"
-              $docker_compose_location -f "$stack_dir"/*compose.yml pull
+              $docker_compose_bin_location -f "$stack_dir"/*compose.yml pull
             else
               echo "**** [container-tool] [pull] Skipping - $stack_dir"
             fi
@@ -67,9 +68,9 @@ in
           for stack_dir in "$@" ; do
             if [ ! -f "$stack_dir"/.norestart ]; then
               echo "**** [container-tool] [pull_restart] Pulling Images - $stack_dir"
-              $docker_compose_location -f "$stack_dir"/*compose.yml pull
+              $docker_compose_bin_location -f "$stack_dir"/*compose.yml pull
               echo "**** [container-tool] [pull_restart] Bringing up stack - $stack_dir"
-              $docker_compose_location -f "$stack_dir"/*compose.yml up -d
+              $docker_compose_bin_location -f "$stack_dir"/*compose.yml up -d
             else
               echo "**** [container-tool] [pull_restart] Skipping - $stack_dir"
             fi
@@ -80,9 +81,9 @@ in
           for stack_dir in "$@" ; do
             if [ ! -f "$stack_dir"/.norestart ]; then
               echo "**** [container-tool] [restart] Bringing down stack - $stack_dir"
-              $docker_compose_location -f "$stack_dir"/*compose.yml down --timeout $DOCKER_COMPOSE_TIMEOUT
+              $docker_compose_bin_location -f "$stack_dir"/*compose.yml down --timeout $DOCKER_COMPOSE_TIMEOUT
               echo "**** [container-tool] [restart] Bringing up stack - $stack_dir"
-              $docker_compose_location -f "$stack_dir"/*compose.yml up -d
+              $docker_compose_bin_location -f "$stack_dir"/*compose.yml up -d
             else
               echo "**** [container-tool] [restart] Skipping - $stack_dir"
             fi
@@ -107,7 +108,7 @@ in
         ct_stop () {
           for stack_dir in "$@" ; do
             echo "**** [container-tool] [stop] Stopping stack - $stack_dir"
-            $docker_compose_location -f "$stack_dir"/*compose.yml down --timeout $DOCKER_COMPOSE_TIMEOUT
+            $docker_compose_bin_location -f "$stack_dir"/*compose.yml down --timeout $DOCKER_COMPOSE_TIMEOUT
           done
         }
 
@@ -149,18 +150,18 @@ in
         }
 
         ct_stop_stack () {
-          stacks=$($docker_compose_location ls | tail -n +2 |  ${pkgs.gnused}/bin/awk '{print $1}')
+          stacks=$($docker_compose_bin_location ls | tail -n +2 |  ${pkgs.gnused}/bin/awk '{print $1}')
           for stack in $stacks; do
-            stack_image=$($docker_compose_location -p $stack images | tail -n +2 |  ${pkgs.gnused}/bin/awk '{print $1,$2}' | grep "db-backup")
+            stack_image=$($docker_compose_bin_location -p $stack images | tail -n +2 |  ${pkgs.gnused}/bin/awk '{print $1,$2}' | grep "db-backup")
             if [ "$1" != "nobackup" ] ; then
               if [[ $stack_image =~ .*"db-backup".* ]] ; then
                 stack_container_name=$(echo "$stack_image" |  ${pkgs.gawk}/bin/awk '{print $1}')
                 echo "** Backing up database for '$stack_container_name' before stopping"
-                ${config.virtualisation.docker.package}/bin/docker exec $stack_container_name /usr/local/bin/backup-now
+                $docker_bin_location exec $stack_container_name /usr/local/bin/backup-now
               fi
             fi
             echo "** Gracefully stopping compose stack: $stack"
-            $docker_compose_location -p $stack down --timeout $DOCKER_COMPOSE_TIMEOUT
+            $docker_compose_bin_location -p $stack down --timeout $DOCKER_COMPOSE_TIMEOUT
           done
         }
 
@@ -211,9 +212,9 @@ in
         ct_restart_first () {
           if [ -s "$DOCKER_COMPOSE_STACK_DATA_PATH""$DOCKER_COMPOSE_STACK_APP_RESTART_FIRST"/*compose.yml ]; then
             echo "**** [container-tool] [restart_first] Bringing down stack - $DOCKER_COMPOSE_STACK_DATA_PATH$DOCKER_COMPOSE_STACK_APP_RESTART_FIRST"
-            $docker_compose_location -f "$DOCKER_COMPOSE_STACK_DATA_PATH"/"$DOCKER_COMPOSE_STACK_APP_RESTART_FIRST"/*compose.yml down --timeout $DOCKER_COMPOSE_TIMEOUT
+            $docker_compose_bin_location -f "$DOCKER_COMPOSE_STACK_DATA_PATH"/"$DOCKER_COMPOSE_STACK_APP_RESTART_FIRST"/*compose.yml down --timeout $DOCKER_COMPOSE_TIMEOUT
             echo "**** [container-tool] [restart_first] Bringing up stack - $DOCKER_COMPOSE_STACK_DATA_PATH$DOCKER_COMPOSE_STACK_APP_RESTART_FIRST"
-            $docker_compose_location -f "$DOCKER_COMPOSE_STACK_DATA_PATH"/"$DOCKER_COMPOSE_STACK_APP_RESTART_FIRST"/*compose.yml up -d
+            $docker_compose_bin_location -f "$DOCKER_COMPOSE_STACK_DATA_PATH"/"$DOCKER_COMPOSE_STACK_APP_RESTART_FIRST"/*compose.yml up -d
           fi
         }
 
@@ -294,7 +295,7 @@ in
     programs = {
       bash = {
         interactiveShellInit = ''
-          docker_compose_location="${pkgs.unstable.docker-compose}/bin/docker-compose"
+          docker_compose_bin_location="$(which docker-compose)"
           export DOCKER_COMPOSE_TIMEOUT=''${DOCKER_TIMEOUT:-"120"}
 
           ### Figure out if we need to use sudo for docker commands
@@ -309,22 +310,22 @@ in
              case "$1" in
                "down" )
                  arg=$(echo "$@" | ${pkgs.gnused}/bin/sed "s|^$1||g")
-                 $dsudo $docker_compose_location down --timeout $DOCKER_COMPOSE_TIMEOUT $arg
+                 $dsudo $docker_compose_bin_location down --timeout $DOCKER_COMPOSE_TIMEOUT $arg
                ;;
                "restart" )
                  arg=$(echo "$@" | ${pkgs.gnused}/bin/sed "s|^$1||g")
-                 $dsudo $docker_compose_location restart --timeout $DOCKER_COMPOSE_TIMEOUT $arg
+                 $dsudo $docker_compose_bin_location restart --timeout $DOCKER_COMPOSE_TIMEOUT $arg
                ;;
                "stop" )
                  arg=$(echo "$@" | ${pkgs.gnused}/bin/sed "s|^$1||g")
-                 $dsudo $docker_compose_location stop --timeout $DOCKER_COMPOSE_TIMEOUT $arg
+                 $dsudo $docker_compose_bin_location stop --timeout $DOCKER_COMPOSE_TIMEOUT $arg
                ;;
                "up" )
                  arg=$(echo "$@" | ${pkgs.gnused}/bin/sed "s|^$1||g")
-                 $dsudo $docker_compose_location up $arg
+                 $dsudo $docker_compose_bin_location up $arg
                ;;
                * )
-                 $dsudo $docker_compose_location ''${@}
+                 $dsudo $docker_compose_bin_location ''${@}
                ;;
             esac
            fi
@@ -332,11 +333,11 @@ in
 
           alias container-tool=container_tool
           alias dcpull='$dsudo docker-compose pull'                                                                                        # Docker Compose Pull
-          alias dcu='$dsudo $docker_compose_location up'                                                                                   # Docker Compose Up
-          alias dcud='$dsudo $docker_compose_location up -d'                                                                               # Docker Compose Daemonize
-          alias dcd='$dsudo $docker_compose_location down --timeout $DOCKER_COMPOSE_TIMEOUT'                                               # Docker Compose Down
-          alias dcl='$dsudo $docker_compose_location logs -f'                                                                              # Docker Compose Logs
-          alias dcrecycle='$dsudo $docker_compose_location down --timeout $DOCKER_COMPOSE_TIMEOUT ; $dsudo $docker_compose_location up -d' # Docker Compose Restart
+          alias dcu='$dsudo $docker_compose_bin_location up'                                                                                   # Docker Compose Up
+          alias dcud='$dsudo $docker_compose_bin_location up -d'                                                                               # Docker Compose Daemonize
+          alias dcd='$dsudo $docker_compose_bin_location down --timeout $DOCKER_COMPOSE_TIMEOUT'                                               # Docker Compose Down
+          alias dcl='$dsudo $docker_compose_bin_location logs -f'                                                                              # Docker Compose Logs
+          alias dcrecycle='$dsudo $docker_compose_bin_location down --timeout $DOCKER_COMPOSE_TIMEOUT ; $dsudo $docker_compose_bin_location up -d' # Docker Compose Restart
         '';
       };
     };

@@ -245,6 +245,7 @@ in
             export DOCKER_CONFIG="$HOME/.config/docker"
           fi
 
+          export docker_bin_location="$(which docker)"
           export DOCKER_TIMEOUT=${toString cfg.daemon.shutdownTimeout}
 
           # Figure out if we need to use sudo for docker commands
@@ -254,15 +255,15 @@ in
             dsudo='sudo'
           fi
 
-          alias dex="$dsudo ${config.virtualisation.docker.package}/bin/docker exec -it"                                                                                         # Execute interactive container, e.g., $dex base /bin/bash
-          alias di="$dsudo ${config.virtualisation.docker.package}/bin/docker images"                                                                                            # Get images
-          alias dki="$dsudo ${config.virtualisation.docker.package}/bin/docker run -it -P"                                                                                       # Run interactive container, e.g., $dki base /bin/bash
-          alias dpsa="$dsudo docker_ps -a"                                                                                                                                       # Get process included stop container
-          db() { $dsudo ${config.virtualisation.docker.package}/bin/docker build -t="$1" .; }                                                       # Build Docker Image from Current Directory
-          dri() { $dsudo ${config.virtualisation.docker.package}/bin/docker rmi -f $($dsudo ${config.virtualisation.docker.package}/bin/docker images -q); }                     # Forcefully Remove all images
-          drm() { $dsudo ${config.virtualisation.docker.package}/bin/docker rm $($dsudo ${config.virtualisation.docker.package}/bin/docker ps -a -q); }                          # Remove all containers
-          drmf() { $dsudo ${config.virtualisation.docker.package}/bin/docker stop $($dsudo ${config.virtualisation.docker.package}/bin/docker ps -a -q) -timeout $DOCKER_COMPOSE_TIMEOUT && $dsudo ${config.virtualisation.docker.package}/bin/docker rm $($dsudo ${config.virtualisation.docker.package}/bin/docker ps -a -q) ; } # Stop and remove all containers
-          dstop() { $dsudo ${config.virtualisation.docker.package}/bin/docker stop $($dsudo ${config.virtualisation.docker.package}/bin/docker ps -a -q) -t $DOCKER_TIMEOUT; }   # Stop all containers
+          alias dex="$dsudo $docker_bin_location exec -it"                                                           # Execute interactive container, e.g., $dex base /bin/bash
+          alias di="$dsudo $docker_bin_location images"                                                              # Get images
+          alias dki="$dsudo $docker_bin_location run -it -P"                                                         # Run interactive container, e.g., $dki base /bin/bash
+          alias dpsa="$dsudo docker_ps -a"                                                                           # Get process included stop container
+          db() { $dsudo $docker_bin_location build -t="$1" .; }                                                      # Build Docker Image from Current Directory
+          dri() { $dsudo $docker_bin_location rmi -f $($dsudo $docker_bin_location images -q); }                     # Forcefully Remove all images
+          drm() { $dsudo $docker_bin_location rm $($dsudo $docker_bin_location ps -a -q); }                          # Remove all containers
+          drmf() { $dsudo $docker_bin_location stop $($dsudo $docker_bin_location ps -a -q) -timeout $DOCKER_COMPOSE_TIMEOUT && $dsudo $docker_bin_location rm $($dsudo $docker_bin_location ps -a -q) ; } # Stop and remove all containers
+          dstop() { $dsudo $docker_bin_location stop $($dsudo $docker_bin_location ps -a -q) -t $DOCKER_TIMEOUT; }   # Stop all containers
 
           # Get RAM Usage of a Container
           docker_mem() {
@@ -276,7 +277,7 @@ in
 
           # Get IP Address of a Container
           docker_ip() {
-              ip=$($dsudo ${config.virtualisation.docker.package}/bin/docker inspect --format="{{.NetworkSettings.IPAddress}}" "$1" 2>/dev/null)
+              ip=$($dsudo $docker_bin_location inspect --format="{{.NetworkSettings.IPAddress}}" "$1" 2>/dev/null)
               if (($? >= 1)); then
                   # Container doesn't exist
                   ip='n/a'
@@ -287,7 +288,7 @@ in
 
           # Enhanced version of 'docker ps' which outputs two extra columns IP and RAM
           docker_ps() {
-            tmp=$($dsudo ${config.virtualisation.docker.package}/bin/docker ps "$@")
+            tmp=$($dsudo $docker_bin_location ps "$@")
             headings=$(echo "$tmp" | head --lines=1)
             max_len=$(echo "$tmp" | wc --max-line-length)
             dps=$(echo "$tmp" | tail --lines=+2)
@@ -296,7 +297,7 @@ in
             if [[ -n "$dps" ]]; then
               while read -r line; do
                 container_short_hash=$(echo "$line" | cut -d' ' -f1)
-                container_long_hash=$($dsudo ${config.virtualisation.docker.package}/bin/docker inspect --format="{{.Id}}" "$container_short_hash")
+                container_long_hash=$($dsudo $docker_bin_location inspect --format="{{.Id}}" "$container_short_hash")
                 container_name=$(echo "$line" | rev | cut -d' ' -f1 | rev)
                 if [ -n "$container_long_hash" ]; then
                   ram=$(docker_mem "$container_long_hash")
@@ -310,7 +311,7 @@ in
 
           #  List the volumes for a given container
           docker_vol() {
-            vols=$($dsudo ${config.virtualisation.docker.package}/bin/docker inspect --format="{{.HostConfig.Binds}}" "$1")
+            vols=$($dsudo $docker_bin_location inspect --format="{{.HostConfig.Binds}}" "$1")
             vols=''${vols:1:-1}
             for vol in $vols; do
               echo "$vol"
@@ -320,19 +321,19 @@ in
 
           if command -v "fzf" &>/dev/null; then
             # bash into running container
-            alias dbash='c_name=$($dsudo ${config.virtualisation.docker.package}/bin/docker ps --format "table {{.Names}}\t{{.Image}}\t{{ .ID}}\t{{.RunningFor}}" | ${pkgs.gnused}/bin/sed "/NAMES/d" | sort | fzf --tac |  ${pkgs.gawk}/bin/awk '"'"'{print $1;}'"'"') ; echo -e "\e[41m**\e[0m Entering $c_name from $(cat /etc/hostname)" ; $dsudo ${config.virtualisation.docker.package}/bin/docker exec -e COLUMNS=$( tput cols ) -e LINES=$( tput lines ) -it $c_name bash'
+            alias dbash='c_name=$($dsudo $docker_bin_location ps --format "table {{.Names}}\t{{.Image}}\t{{ .ID}}\t{{.RunningFor}}" | ${pkgs.gnused}/bin/sed "/NAMES/d" | sort | fzf --tac |  ${pkgs.gawk}/bin/awk '"'"'{print $1;}'"'"') ; echo -e "\e[41m**\e[0m Entering $c_name from $(cat /etc/hostname)" ; $dsudo $docker_bin_location exec -e COLUMNS=$( tput cols ) -e LINES=$( tput lines ) -it $c_name bash'
 
             # view logs
-            alias dlog='c_name=$($dsudo ${config.virtualisation.docker.package}/bin/docker ps --format "table {{.Names}}\t{{.Image}}\t{{ .ID}}\t{{.RunningFor}}" | ${pkgs.gnused}/bin/sed "/NAMES/d" | sort | fzf --tac |  ${pkgs.gnused}/bin/awk '"'"'{print $1;}'"'"') ; echo -e "\e[41m**\e[0m Viewing $c_name from $(cat /etc/hostname)" ; $dsudo ${config.virtualisation.docker.package}/bin/docker logs $c_name $1'
+            alias dlog='c_name=$($dsudo $docker_bin_location ps --format "table {{.Names}}\t{{.Image}}\t{{ .ID}}\t{{.RunningFor}}" | ${pkgs.gnused}/bin/sed "/NAMES/d" | sort | fzf --tac |  ${pkgs.gnused}/bin/awk '"'"'{print $1;}'"'"') ; echo -e "\e[41m**\e[0m Viewing $c_name from $(cat /etc/hostname)" ; $dsudo $docker_bin_location logs $c_name $1'
 
             # sh into running container
-            alias dsh='c_name=$($dsudo ${config.virtualisation.docker.package}/bin/docker ps --format "table {{.Names}}\t{{.Image}}\t{{ .ID}}\t{{.RunningFor}}" | ${pkgs.gnused}/bin/sed "/NAMES/d" | sort | fzf --tac |  ${pkgs.gnused}/bin/awk '"'"'{print $1;}'"'"') ; echo -e "\e[41m**\e[0m Entering $c_name from $(cat /etc/hostname)" ; $dsudo ${config.virtualisation.docker.package}/bin/docker exec -e COLUMNS=$( tput cols ) -e LINES=$( tput lines ) -it $c_name sh'
+            alias dsh='c_name=$($dsudo $docker_bin_location ps --format "table {{.Names}}\t{{.Image}}\t{{ .ID}}\t{{.RunningFor}}" | ${pkgs.gnused}/bin/sed "/NAMES/d" | sort | fzf --tac |  ${pkgs.gnused}/bin/awk '"'"'{print $1;}'"'"') ; echo -e "\e[41m**\e[0m Entering $c_name from $(cat /etc/hostname)" ; $dsudo $docker_bin_location exec -e COLUMNS=$( tput cols ) -e LINES=$( tput lines ) -it $c_name sh'
 
             # Remove running container
-            alias drm='$dsudo ${config.virtualisation.docker.package}/bin/docker rm $( $dsudo ${config.virtualisation.docker.package}/bin/docker ps --format "table {{.Names}}\t{{.Image}}\t{{ .ID}}\t{{.RunningFor}}" | ${pkgs.gnused}/bin/sed "/NAMES/d" | sort | fzf --tac |  ${pkgs.gawk}/bin/awk '"'"'{print $1;}'"'"' )'
+            alias drm='$dsudo $docker_bin_location rm $( $dsudo $docker_bin_location ps --format "table {{.Names}}\t{{.Image}}\t{{ .ID}}\t{{.RunningFor}}" | ${pkgs.gnused}/bin/sed "/NAMES/d" | sort | fzf --tac |  ${pkgs.gawk}/bin/awk '"'"'{print $1;}'"'"' )'
           fi
 
-          alias dpull='$dsudo ${config.virtualisation.docker.package}/bin/docker pull'                                                                                                                                                                 # ${config.virtualisation.docker.package}/bin/docker Pull
+          alias dpull='$dsudo $docker_bin_location pull'                                                                                                                                                                 # $docker_bin_location Pull
         '';
       };
     };
@@ -341,8 +342,8 @@ in
       let
         networks = config.host.feature.virtualization.docker.networks;
         mkCreate = name: net: ''
-          ${config.virtualisation.docker.package}/bin/docker network inspect ${name} > /dev/null || \
-            ${config.virtualisation.docker.package}/bin/docker network create ${name} --subnet ${net.subnet}${if net.driver != null then " --driver ${net.driver}" else ""}
+          $docker_bin_location network inspect ${name} > /dev/null || \
+            $docker_bin_location network create ${name} --subnet ${net.subnet}${if net.driver != null then " --driver ${net.driver}" else ""}
         '';
       in
         concatStringsSep "\n" (mapAttrsToList mkCreate networks);
