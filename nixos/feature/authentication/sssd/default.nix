@@ -88,6 +88,13 @@ in
         #SECRET     description = "Filter to allow user access";
         #SECRET   };
         #SECRET };
+        pam = {
+          SSHDStrictMode = mkOption {
+            default = true;
+            type = with types; bool;
+            description = "Enable PAM Strict mode for SSHD Logins";
+          };
+        };
         objectclass = {
           user = mkOption {
             default = "inetOrgPerson";
@@ -196,8 +203,13 @@ in
     };
 
     security = {
+      pam = {
+        services = {
+          security.pam.services.sshd.sssdStrictAccess = cfg.pam.SSHDStrictMode;
+          systemd-user.makeHomeDir = mkDefault true;
+        };
+      };
       sudo.package = pkgs.sudo.override { withSssd = true; };
-      pam.services.systemd-user.makeHomeDir = true;
     };
 
     ### We switch to SOPS declarations here because we have credentials that need to be secrets
