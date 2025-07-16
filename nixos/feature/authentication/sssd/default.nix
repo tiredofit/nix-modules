@@ -204,7 +204,7 @@ in
     security = {
       pam = {
         services = {
-          security.pam.services.sshd.sssdStrictAccess = cfg.pam.SSHDStrictMode;
+          sshd.sssdStrictAccess = cfg.pam.SSHDStrictMode;
           systemd-user.makeHomeDir = mkDefault true;
         };
       };
