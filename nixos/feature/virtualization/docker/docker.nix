@@ -338,15 +338,15 @@ in
       };
     };
 
-    #system.activationScripts.create_docker_networks =
-    #  let
-    #    networks = config.host.feature.virtualization.docker.networks;
-    #    mkCreate = name: net: ''
-    #      $docker_bin_location network inspect ${name} > /dev/null || \
-    #        $docker_bin_location network create ${name} --subnet ${net.subnet}${if net.driver != null then " --driver ${net.driver}" else ""}
-    #    '';
-    #  in
-    #    concatStringsSep "\n" (mapAttrsToList mkCreate networks);
+    system.activationScripts.create_docker_networks =
+      let
+        networks = config.host.feature.virtualization.docker.networks;
+        mkCreate = name: net: ''
+          ${config.virtualisation.docker.package}/bin/docker network inspect ${name} > /dev/null || \
+            ${config.virtualisation.docker.package}/bin/docker network create ${name} --subnet ${net.subnet}${if net.driver != null then " --driver ${net.driver}" else ""}
+        '';
+      in
+        concatStringsSep "\n" (mapAttrsToList mkCreate networks);
 
     users.groups.docker = {
       members = mkDefault cfg.groupMembers;

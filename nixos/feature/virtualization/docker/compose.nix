@@ -298,13 +298,6 @@ in
           docker_compose_bin_location="$(which docker-compose)"
           export DOCKER_COMPOSE_TIMEOUT=''${DOCKER_TIMEOUT:-"120"}
 
-          ### Figure out if we need to use sudo for docker commands
-          ##if id -nG "$USER" | grep -qw "docker" || [ $(id -u) = "0" ]; then
-          ##    dsudo=""
-          ##else
-          ##    dsudo='sudo'
-          ##fi
-
           docker-compose() {
            if [ "$2" != "--help" ] ; then
              case "$1" in
