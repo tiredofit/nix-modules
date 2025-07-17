@@ -31,6 +31,7 @@ with lib;
     ./openbao.nix
     ./pciutils.nix
     ./psmisc.nix
+    ./rclone.nix
     ./rsync.nix
     ./strace.nix
     ./tmux.nix
