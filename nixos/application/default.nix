@@ -22,6 +22,7 @@ with lib;
     ./lazydocker.nix
     ./less.nix
     ./links.nix
+    ./liquidprompt.nix
     ./lsof.nix
     ./mtr.nix
     ./nano.nix
@@ -33,5 +34,6 @@ with lib;
     ./strace.nix
     ./tmux.nix
     ./wget.nix
+    ./zoxide.nix
   ];
 }
