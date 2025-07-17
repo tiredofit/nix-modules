@@ -7,6 +7,7 @@ with lib;
     ./bind.nix
     ./binutils.nix
     ./busybox.nix
+    ./comma.nix
     ./coreutils.nix
     ./curl.nix
     ./diceware.nix
@@ -32,6 +33,7 @@ with lib;
     ./pciutils.nix
     ./psmisc.nix
     ./rclone.nix
+    ./ripgrep.nix
     ./rsync.nix
     ./strace.nix
     ./tmux.nix
