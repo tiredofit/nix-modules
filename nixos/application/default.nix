@@ -10,6 +10,7 @@ with lib;
     ./coreutils.nix
     ./curl.nix
     ./diceware.nix
+    ./direnv.nix
     ./dust.nix
     ./e2fsprogs.nix
     ./fzf.nix

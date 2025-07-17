@@ -8,7 +8,7 @@ in
   options = {
     host.application.liquidprompt = {
       enable = mkOption {
-        default = false;
+        default = true;
         type = with types; bool;
         description = "Enables liquidprompt";
       };
