@@ -151,6 +151,79 @@ in
                   fi
               }
 
+resetcow() {
+  target_name="$1"
+  search_dir="$2"
+
+  if [ -z "$target_name" ]; then
+    echo "Usage: resetcow <file_or_dir_name> [search_directory]"
+    return 1
+  fi
+
+  if [ -z "$search_dir" ]; then
+    path="$target_name"
+    if [ -f "$path" ]; then
+      perms=$(stat -c %a "$path")
+      owner=$(stat -c %u "$path")
+      group=$(stat -c %g "$path")
+      touch "$path.nocow"
+      chattr +c "$path.nocow"
+      dd if="$path" of="$path.nocow" bs=1M
+      rm "$path"
+      mv "$path.nocow" "$path"
+      chmod "$perms" "$path"
+      chown "$owner:$group" "$path"
+      echo "Removed Copy on Write for file '$path'"
+    elif [ -d "$path" ]; then
+      perms=$(stat -c %a "$path")
+      owner=$(stat -c %u "$path")
+      group=$(stat -c %g "$path")
+      mv "$path" "$path.nocowdir"
+      mkdir -p "$path"
+      chattr +C "$path"
+      cp -aR "$path.nocowdir/"* "$path"
+      cp -aR "$path.nocowdir/."* "$path" 2>/dev/null
+      rm -rf "$path.nocowdir"
+      chmod "$perms" "$path"
+      chown "$owner:$group" "$path"
+      echo "Removed Copy on Write for directory '$path'"
+    else
+      echo "Can't detect if '$path' is file or directory, skipping"
+    fi
+  else
+    find "$search_dir" -name "$target_name" | while read path; do
+      if [ -f "$path" ]; then
+        perms=$(stat -c %a "$path")
+        owner=$(stat -c %u "$path")
+        group=$(stat -c %g "$path")
+        touch "$path.nocow"
+        chattr +c "$path.nocow"
+        dd if="$path" of="$path.nocow" bs=1M
+        rm "$path"
+        mv "$path.nocow" "$path"
+        chmod "$perms" "$path"
+        chown "$owner:$group" "$path"
+        echo "Removed Copy on Write for file '$path'"
+      elif [ -d "$path" ]; then
+        perms=$(stat -c %a "$path")
+        owner=$(stat -c %u "$path")
+        group=$(stat -c %g "$path")
+        mv "$path" "$path.nocowdir"
+        mkdir -p "$path"
+        chattr +C "$path"
+        cp -aR "$path.nocowdir/"* "$path"
+        cp -aR "$path.nocowdir/."* "$path" 2>/dev/null
+        rm -rf "$path.nocowdir"
+        chmod "$perms" "$path"
+        chown "$owner:$group" "$path"
+        echo "Removed Copy on Write for directory '$path'"
+      else
+        echo "Can't detect if '$path' is file or directory, skipping"
+      fi
+    done
+  fi
+}
+
         '';
       };
     };
