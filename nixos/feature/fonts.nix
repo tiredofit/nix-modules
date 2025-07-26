@@ -64,7 +64,7 @@ in
       fontconfig = mkIf graphics.enable {
         enable = mkDefault true;
         antialias = mkDefault true;
-        cache32Bit = mkDefault true;
+        cache32Bit = mkDefault false;
         hinting.enable = mkDefault true;
         hinting.autohint = mkDefault true;
         defaultFonts = {

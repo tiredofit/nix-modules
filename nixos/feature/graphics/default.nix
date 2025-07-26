@@ -31,8 +31,8 @@
     hardware = {
       graphics = mkIf ((config.host.feature.graphics.enable) && (config.host.feature.graphics.acceleration)) {
         #package = pkgs.unstable.mesa.drivers;
-        enable = true;
-        enable32Bit = true;
+        enable = mkDefault true;
+        enable32Bit = mkDefault false;
       };
     };
 

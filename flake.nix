@@ -1,6 +1,7 @@
 {
   description = "A collection of NixOS modules";
-  inputs = {};   
+  inputs = {
+  };
   outputs = { self, ... }@inputs:
     {
       nixosModules = import ./nixos;
