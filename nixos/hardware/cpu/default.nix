@@ -2,7 +2,7 @@
 with lib;
 {
   imports = [
-    #./apple.nix
+    ./apple.nix
     ./ampere.nix
     ./amd.nix
     ./intel.nix

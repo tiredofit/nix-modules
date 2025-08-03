@@ -359,8 +359,8 @@ in
     };
 
     hardware = {
-      asahi = {
-        setupAsahiSound = mkIf ((config.host.hardware.cpu == "apple") (mkDefault true));
+      asahi = mkIf (cfg.apple.enable && (device.cpu == "apple")) {
+        setupAsahiSound = mkIf (cfg.apple.enable && (device.cpu == "apple")) (mkForce true);
       };
     };
 

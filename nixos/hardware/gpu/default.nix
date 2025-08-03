@@ -2,8 +2,8 @@
   with lib;
 {
   imports = [
-    ./amd.nix
     ./apple.nix
+    ./amd.nix
     ./intel.nix
     ./nvidia.nix
   ];
