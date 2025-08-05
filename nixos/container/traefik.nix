@@ -5,7 +5,7 @@ let
   container_description = "Enables Traefik reverse proxy container";
   container_image_registry = "docker.io";
   container_image_name = "docker.io/tiredofit/traefik";
-  container_image_tag = "3.4";
+  container_image_tag = "3.5";
   cfg = config.host.container.${container_name};
   hostname = config.host.network.hostname;
 in
@@ -71,7 +71,7 @@ in
       };
       docker = {
         constraint = mkOption {
-          default = "Label(`traefik.proxy.visibility`, `public`)";
+          default = "Label(`traefik.proxy.visibility`, `public`) || Label(`traefik.proxy.visibility`, `any`)";
           type = with types; str;
           description = "Docker constraint filter for Traefik service discovery";
         };
