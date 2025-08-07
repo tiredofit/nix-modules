@@ -195,12 +195,12 @@ in
           createIfMissing = mkDefault true;
           permissions = mkDefault "755";
         }
-        {
-          source = "/var/local/data/_system/${container_name}/config";
-          target = "/data/config";
-          createIfMissing = mkDefault true;
-          permissions = mkDefault "755";
-        }
+        #{
+        #  source = "/var/local/data/_system/${container_name}/config";
+        #  target = "/data/config";
+        #  createIfMissing = mkDefault true;
+        #  permissions = mkDefault "755";
+        #}
         {
           source = "/var/local/data/_system/${container_name}/logs";
           target = "/data/logs";
