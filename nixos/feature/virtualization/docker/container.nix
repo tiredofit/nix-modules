@@ -104,6 +104,11 @@ let
               default = true;
               description = "Create directory if it doesn't exist";
             };
+            readOnly = mkOption {
+              type = types.bool;
+              default = false;
+              description = "Mount as read-only";
+            };
             removeCOW = mkOption {
               type = types.bool;
               default = false;
@@ -513,8 +518,12 @@ let
   # Generate volume arguments for Docker
   generateVolumeArgs = cfg: concatMapStringsSep " " (vol:
     let
-      mountString = "${vol.source}:${vol.target}";
-      fullMountString = if vol.options != "" then "${mountString}:${vol.options}" else mountString;
+      baseMount = "${vol.source}:${vol.target}";
+      mountOptions =
+        if vol.options != "" then vol.options
+        else if vol.readOnly then "ro"
+        else "";
+      fullMountString = if mountOptions != "" then "${baseMount}:${mountOptions}" else baseMount;
     in
     "--volume ${fullMountString}"
   ) cfg.volumes;
