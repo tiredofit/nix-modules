@@ -199,8 +199,6 @@ in
           }
         ] else []);
 
-      hostname = mkDefault "${config.host.network.hostname}.${config.host.network.domainname}";
-
       volumes = [
         {
           source = "/var/local/data/_system/${container_name}/asset/custom-plugins";
