@@ -212,12 +212,12 @@ in
           createIfMissing = mkDefault true;
           permissions = mkDefault "755";
         }
-        {
-          source = "/var/local/data/_system/${container_name}/certs";
-          target = "/certs";
-          createIfMissing = mkDefault true;
-          permissions = mkDefault "755";
-        }
+        #{
+        #  source = "/var/local/data/_system/${container_name}/certs";
+        #  target = "/certs";
+        #  createIfMissing = mkDefault true;
+        #  permissions = mkDefault "755";
+        #}
         {
           source = "/var/local/data/_system/${container_name}/config";
           target = "/etc/openldap/slapd.d";
@@ -239,7 +239,7 @@ in
         }
         {
           source = "/var/local/data/_system/traefik-internal/certs/dump/${config.host.network.domainname}";
-          target = "/c2";
+          target = "/certs";
           createIfMissing = mkDefault false;
           readOnly = mkDefault true;
         }
