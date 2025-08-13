@@ -1,4 +1,4 @@
-{ config, lib, modulesPath, pkgs, ... }:
+{ config, lib, modulesPath, options, pkgs, ... }:
 let
   role = config.host.role;
 in
@@ -111,16 +111,31 @@ in
     };
 
     systemd = {
-      enableEmergencyMode = mkDefault false;          # Allow system to continue booting in headless mode.
-      watchdog = mkDefault {                          # See https://0pointer.de/blog/projects/watchdog.html
-        runtimeTime = "20s";                          # Hardware watchdog reboot after 20s
-        rebootTime = "30s";                           # Force reboot when hangs after 30s. See https://utcc.utoronto.ca/~cks/space/blog/linux/SystemdShutdownWatchdog
-      };
+      enableEmergencyMode = mkDefault false;        # Allow system to continue booting in headless mode.
 
       sleep.extraConfig = ''
         AllowSuspend=no
         AllowHibernation=no
       '';
-    };
+    }
+    // (
+      # TODO: remove when 25.05 is deprecated
+      if options.systemd ? settings then
+        {
+          settings.Manager = {                        # See https://0pointer.de/blog/projects/watchdog.html
+            RuntimeWatchdogSec = mkDefault "20s";     # Hardware watchdog reboot after 20s
+            RebootWatchdogSec = mkDefault "30s";      # Force reboot when hangs after 30s. See https://utcc.utoronto.ca/~cks/space/blog/linux/SystemdShutdownWatchdog
+            KExecWatchdogSec = mkDefault "1m";
+          };
+        }
+      else
+        {
+          watchdog = {
+            runtimeTime = mkDefault "20s";
+            rebootTime = mkDefault "30s";
+            kexecTime = mkDefault "1m";
+          };
+        }
+    );
   };
 }
