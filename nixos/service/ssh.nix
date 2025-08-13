@@ -93,9 +93,6 @@ in
             "aes256-gcm@openssh.com"
           ];
           GatewayPorts = mkDefault "clientspecified";
-          hostKeyAlgorithms = mkIf cfg.harden[
-            "ssh-ed25519"
-          ];
           KbdInteractiveAuthentication = mkDefault true;
           KexAlgorithms = mkIf cfg.harden [
             "mlkem768x25519-sha256"
