@@ -164,13 +164,24 @@ in
           };
         };
       };
+      hostname = mkOption {
+        type = with types; nullOr str;
+        default = null;
+        description = "Custom hostname for the container (overrides default if set)";
+      };
+      containerName = mkOption {
+        type = with types; nullOr str;
+        default = null;
+        description = "Custom container name (overrides default if set)";
+      };
     };
   };
 
   config = mkIf cfg.enable {
     host.feature.virtualization.docker.containers."${container_name}" = {
       enable = mkDefault true;
-      containerName = mkDefault "${container_name}";
+      containerName = mkDefault (if cfg.containerName != null then cfg.containerName else "${container_name}");
+      hostname = mkDefault cfg.hostname;
 
       image = {
         name = mkDefault cfg.image.name;
@@ -185,8 +196,6 @@ in
           max = mkDefault "512M";
         };
       };
-
-      hostname = mkDefault "${hostname}.internal.${config.host.network.domainname}";
 
       volumes = [
         {
@@ -277,7 +286,15 @@ in
         ];
         aliases = {
           default = mkDefault true;
-          extra = mkDefault [ ];
+          extra = mkDefault (
+            let
+              rawName = if cfg.containerName != null then cfg.containerName else "${container_name}";
+              aliasName = lib.strings.removeSuffix "-app" rawName;
+              hostAlias = config.host.network.hostname.${aliasName} or null;
+              aliasesList = [ aliasName ] ++ (lib.optional (hostAlias != null) hostAlias);
+            in
+              aliasesList ++ (cfg.networking.aliases.extra or [])
+          );
         };
       };
     };

@@ -112,13 +112,24 @@ in
           };
         };
       };
+      hostname = mkOption {
+        type = with types; nullOr str;
+        default = null;
+        description = "Custom hostname for the container (overrides default if set)";
+      };
+      containerName = mkOption {
+        type = with types; nullOr str;
+        default = null;
+        description = "Custom container name (overrides default if set)";
+      };
     };
   };
 
   config = mkIf cfg.enable {
     host.feature.virtualization.docker.containers."${container_name}" = {
       enable = mkDefault true;
-      containerName = mkDefault "${container_name}";
+      containerName = mkDefault (if cfg.containerName != null then cfg.containerName else "${container_name}");
+      hostname = mkDefault cfg.hostname;
 
       image = {
         name = mkDefault cfg.image.name;
@@ -175,10 +186,20 @@ in
         networks = [
           "services"
         ];
-        dns = mkIf config.host.container.unbound.enable (config.host.feature.virtualization.docker.containers.unbound.networking.ip);
         aliases = {
           default = mkDefault true;
-          extra = mkDefault [ ];
+          extra = mkDefault (
+            let
+              rawName = if cfg.containerName != null then cfg.containerName else "${container_name}";
+              aliasName = lib.strings.removeSuffix "-app" rawName;
+              hostAlias = config.host.network.hostname.${aliasName} or null;
+              aliasesList = [
+                config.host.network.hostname.${container_name}
+              ] ++ (lib.optional (cfg.hostname != null) cfg.hostname) ++
+                [ aliasName ] ++ (lib.optional (hostAlias != null) hostAlias);
+            in
+              aliasesList ++ (cfg.networking.aliases.extra or [])
+          );
         };
       };
     };
