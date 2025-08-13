@@ -237,6 +237,12 @@ in
           removeCOW = mkDefault true;
           permissions = mkDefault "755";
         }
+        {
+          source = "/var/local/data/_system/traefik-internal/certs/dump/${config.host.network.domainname}";
+          target = "/c2";
+          createIfMissing = mkDefault false;
+          readOnly = mkDefault true;
+        }
       ];
 
       environment = {
