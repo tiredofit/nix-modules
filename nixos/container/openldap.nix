@@ -145,13 +145,24 @@ in
           };
         };
       };
+      hostname = mkOption {
+        type = with types; nullOr str;
+        default = null;
+        description = "Custom hostname for the container (overrides default if set)";
+      };
+      containerName = mkOption {
+        type = with types; nullOr str;
+        default = null;
+        description = "Custom container name (overrides default if set)";
+      };
     };
   };
 
   config = mkIf cfg.enable {
     host.feature.virtualization.docker.containers."${container_name}" = {
       enable = mkDefault true;
-      containerName = mkDefault "${container_name}";
+      containerName = mkDefault (if cfg.containerName != null then cfg.containerName else "${container_name}");
+      hostname = mkDefault (if cfg.hostname != null then cfg.hostname else "${container_name}.${config.host.network.domainname}");
 
       image = {
         name = mkDefault cfg.image.name;
