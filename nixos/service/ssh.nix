@@ -29,7 +29,7 @@ in
         description = "Verbatim contents of sshd_config";
       };
       harden = mkOption {
-        default = false;
+        default = true;
         type = with types; bool;
         description = "Harden with more secure settings";
       };
@@ -89,21 +89,20 @@ in
           AcceptEnv = "LANG LC_*";
           ChallengeResponseAuthentication = mkDefault true;
           Ciphers = mkIf cfg.harden [
-            "aes256-ctr"
-            "aes192-ctr"
-            "aes128-ctr"
-            "aes256-gcm@openssh.com"
-            "aes128-gcm@openssh.com"
             "chacha20-poly1305@openssh.com"
+            "aes256-gcm@openssh.com"
           ];
           GatewayPorts = mkDefault "clientspecified";
+          hostKeyAlgorithms = mkIf cfg.harden[
+            "ssh-ed25519"
+          ];
           KbdInteractiveAuthentication = mkDefault true;
           KexAlgorithms = mkIf cfg.harden [
+            "mlkem768x25519-sha256"
+            "sntrup761x25519-sha512"
+            "sntrup761x25519-sha512@openssh.com"
+            "curve25519-sha256"
             "curve25519-sha256@libssh.org"
-            "diffie-hellman-group-exchange-sha256"
-            "ecdh-sha2-nistp256"
-            "ecdh-sha2-nistp384"
-            "ecdh-sha2-nistp521"
           ];
           LoginGraceTime = mkDefault "45s";
           LogLevel = mkDefault logLevel;
@@ -111,10 +110,6 @@ in
           Macs = mkIf cfg.harden [
             "hmac-sha2-512-etm@openssh.com"
             "hmac-sha2-256-etm@openssh.com"
-            "hmac-sha2-512"
-            "hmac-sha2-256"
-            "umac-128@openssh.com"
-            "umac-128-etm@openssh.com"
           ];
           PasswordAuthentication = mkDefault true;
           PermitRootLogin = mkDefault "no" ;
@@ -125,8 +120,8 @@ in
           RekeyLimit = mkDefault "default 1d";
           StreamLocalBindUnlink = mkDefault true;
           TCPKeepAlive = mkDefault true;
-          X11Forwarding = mkDefault true;
-          X11UseLocalHost = mkDefault true;
+          X11Forwarding = mkDefault false;
+          X11UseLocalHost = mkDefault false;
           X11DisplayOffset = mkDefault 10;
         };
         extraConfig = ''

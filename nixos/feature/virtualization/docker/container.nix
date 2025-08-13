@@ -838,7 +838,6 @@ in
       generateSOPSSecrets containerName cfg
     ) containercfg);
 
-
     systemd.services = mkMerge [
       # Apply special port services for containers with special ports
       (mkMerge (mapAttrsToList (containerName: cfg:
