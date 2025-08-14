@@ -76,7 +76,7 @@ in
           description = "Docker constraint filter for Traefik service discovery";
         };
         endpoint = mkOption {
-          default = if config.host.container.socket-proxy.enable then "http://socket-proxy:2375" else "unix:///var/run/docker.sock";
+          default = if config.host.container.socket-proxy.enable then "http://socket-proxy.socket-proxy:2375" else "unix:///var/run/docker.sock";
           type = with types; str;
           description = "Docker API endpoint (socket-proxy when enabled, unix socket when disabled)";
         };
