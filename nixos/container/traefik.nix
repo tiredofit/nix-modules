@@ -298,9 +298,9 @@ in
 
       networking = {
         networks = [
+          "socket-proxy"
           "services"
           "proxy"
-          "socket-proxy"
         ];
         aliases = {
           default = mkDefault true;

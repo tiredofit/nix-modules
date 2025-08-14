@@ -280,9 +280,9 @@ in
 
       networking = {
         networks = [
+          "socket-proxy"
           "services"
           "proxy-internal"
-          "socket-proxy"
         ];
         aliases = {
           default = mkDefault true;

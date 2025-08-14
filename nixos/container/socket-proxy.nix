@@ -135,8 +135,8 @@ in
 
       networking = {
         networks = [
-          "services"
           "socket-proxy"
+          "services"
         ];
         aliases = {
           default = mkDefault true;
