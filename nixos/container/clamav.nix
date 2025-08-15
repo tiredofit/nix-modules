@@ -4,7 +4,7 @@ let
   container_name = "clamav";
   container_description = "Enables Antivirus scanning container";
   container_image_registry = "docker.io";
-  container_image_name = "docker.io/tiredofit/clamav";
+  container_image_name = "docker.io/nfrastack/${container_name}";
   container_image_tag = "latest";
   cfg = config.host.container.${container_name};
   hostname = config.host.network.hostname;
@@ -177,9 +177,11 @@ in
 
         "LISTEN_PORT" = toString cfg.ports.tcp.container;
         "DEFINITIONS_UPDATE_FREQUENCY" = "60";
-        "ENABLE_ALERT_OLE2_MACROS" = "TRUE";
+
         "ENABLE_DETECT_PUA" = "FALSE";
         "EXCLUDE_PUA" = "Packed,NetTool,PWTool";
+
+        "ALERT_OLE2_MACROS" = "TRUE";
       };
 
       secrets = {
