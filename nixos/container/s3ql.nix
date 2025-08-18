@@ -168,7 +168,10 @@ in
             let
               rawName = if cfg.containerName != null then cfg.containerName else "${container_name}";
               aliasName = lib.strings.removeSuffix "-app" rawName;
-              hostAlias = config.host.network.hostname.${aliasName} or null;
+              hostAlias =
+                if builtins.isAttrs config.host.network.hostname
+                then config.host.network.hostname.${aliasName} or null
+                else null;
               aliasesList = [ aliasName ] ++ (lib.optional (hostAlias != null) hostAlias);
             in
               aliasesList ++ (cfg.networking.aliases.extra or [])
