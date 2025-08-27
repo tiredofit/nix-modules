@@ -44,7 +44,7 @@ in
   config = lib.mkMerge [
   {
     boot.initrd = lib.mkMerge [
-      (lib.mkIf (cfg_impermanence.enable && !cfg_encrypt.enable) {
+      (lib.mkIf ((cfg_impermanence.enable) && (!cfg_encrypt.enable) && (config.host.filesystem.btrfs.enable)) {
         postDeviceCommands = pkgs.lib.mkBefore ''
           mkdir -p /mnt
           mount -o subvol=/ /dev/disk/by-partlabel/rootfs /mnt
@@ -62,7 +62,7 @@ in
         '';
       })
 
-      (lib.mkIf (cfg_impermanence.enable && cfg_encrypt.enable) {
+      (lib.mkIf ((cfg_impermanence.enable) && (cfg_encrypt.enable) && (config.host.filesystem.btrfs.enable)) {
         systemd = {
           enable = true;
           services.rollback = {
@@ -98,7 +98,7 @@ in
       })
     ];
 
-    environment = mkIf cfg_impermanence.enable {
+    environment = mkIf ((cfg_impermanence.enable) && (config.host.filesystem.btrfs.enable)) {
       systemPackages =
         let
           # Running this will show what changed during boot to potentially use for persisting
@@ -133,18 +133,18 @@ in
           ];
 
         persistence."/persist" = {
-            hideMounts = true ;
-            directories = [
-              "/root"                            # Root
-              "/var/lib/nixos"                   # Persist UID and GID mappings
-            ]  ++ cfg_impermanence.directories;
-            files = [
-              "/etc/machine-id"
-            ] ++ cfg_impermanence.files;
-          };
+          hideMounts = true ;
+          directories = [
+            "/root"                            # Root
+            "/var/lib/nixos"                   # Persist UID and GID mappings
+          ]  ++ cfg_impermanence.directories;
+          files = [
+            "/etc/machine-id"
+          ] ++ cfg_impermanence.files;
+        };
     };
 
-    fileSystems = mkIf cfg_impermanence.enable {
+    fileSystems = mkIf ((cfg_impermanence.enable) && (config.host.filesystem.btrfs.enable)) {
       "/persist" = {
         options = [ "subvol=persist/active" "compress=zstd" "noatime"  ];
         neededForBoot = true;
@@ -154,14 +154,14 @@ in
       };
     };
 
-    services = mkIf cfg_impermanence.enable {
+    services = mkIf ((cfg_impermanence.enable) && (config.host.filesystem.btrfs.enable) && (config.host.filesystem.btrfs.snapshot)) {
       btrbk = {
         instances."btrbak" = {
           settings = {
             volume."/persist" = {
-              snapshot_create = "always";
-              subvolume = ".";
-              snapshot_dir = ".snapshots";
+              snapshot_create = mkDefault "always";
+              subvolume = mkDefault ".";
+              snapshot_dir = mkDefault ".snapshots";
             };
           };
         };

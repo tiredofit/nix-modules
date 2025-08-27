@@ -17,6 +17,11 @@ in
         type = with types; bool;
         description = "Enable autoscrubbing of file systems";
       };
+      snapshot = mkOption {
+        default = true;
+        type = with types; bool;
+        description = "Enable automatic configuration of snapshotting of certain subvolumes";
+      };
     };
   };
 
@@ -35,29 +40,29 @@ in
       "/var/lib/docker".options = [ "subvol=var_lib_docker" "compress=zstd" "noatime"  ];
       "/var/local".options = [ "subvol=var_local/active" "compress=zstd" "noatime"  ];
       "/var/local/.snapshots".options = [ "subvol=var_local/snapshots" "compress=zstd" "noatime"  ];
-      "/var/log".options = [ "subvol=var_log" "compress=zstd" "noatime"  ];
+      "/var/log".options = [ "subvol=var_log" "compress=zstd" "noatime" "nodatacow"  ];
       "/var/log".neededForBoot = true;
     };
 
     services = {
-      btrbk = {
+      btrbk = mkIf cfg.snapshot {
         instances."btrbak" = {
-          onCalendar = "*-*-* *:00:00";
+          onCalendar = mkDefault "*-*-* *:00:00";
           settings = {
-            timestamp_format = "long";
-            preserve_day_of_week = "sunday" ;
-            preserve_hour_of_day = "0" ;
-            snapshot_preserve = "48h 10d 4w 12m 10y" ;
-            snapshot_preserve_min = "2d";
+            timestamp_format = mkDefault "long";
+            preserve_day_of_week = mkDefault "sunday" ;
+            preserve_hour_of_day = mkDefault "0" ;
+            snapshot_preserve = mkDefault "48h 10d 4w 12m 10y" ;
+            snapshot_preserve_min = mkDefault "2d";
             volume."/home" = {
-              snapshot_create = "always";
-              subvolume = ".";
-              snapshot_dir = ".snapshots";
+              snapshot_create = mkDefault "always";
+              subvolume = mkDefault ".";
+              snapshot_dir = mkDefault ".snapshots";
             };
             volume."/var/local" = {
-              snapshot_create = "always";
-              subvolume = ".";
-              snapshot_dir = ".snapshots";
+              snapshot_create = mkDefault "always";
+              subvolume = mkDefault ".";
+              snapshot_dir = mkDefault ".snapshots";
             };
           };
         };
