@@ -1,9 +1,6 @@
 { config, lib, pkgs, ... }:
 with lib;
 let
-  # SEE: https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/profiles/hardened.nix
-  # this makes our system more secure
-  # do note that it might break some stuff, e.g. webcam
   sys = config.host.hardware;
   cfg = config.host.feature.security;
 in {
@@ -12,57 +9,74 @@ in {
       enable = mkOption {
         default = false;
         type = with types; bool;
-        description = "Enables security hardening features";
+        description = "Enables security hardening features";        # NOTE: enabling this may break some things
       };
     };
   };
 
   config = mkIf cfg.enable {
+    boot = {
+      blacklistedKernelModules = [
+        # Obscure network protocols
+        "ax25"
+        "netrom"
+        "rose"
+        # Old or rare or insufficiently audited filesystems
+        "adfs"
+        "affs"
+        "bfs"
+        "befs"
+        "cramfs"
+        "efs"
+        "erofs"
+        "exofs"
+        "freevxfs"
+        "f2fs"
+        "hfs"
+        "hpfs"
+        "jfs"
+        "minix"
+        "nilfs2"
+        "ntfs"
+        "omfs"
+        "qnx4"
+        "qnx6"
+        "sysv"
+        "ufs"
+      ] ++ lib.optionals (!sys.bluetooth.enable) [
+        "btusb"                                         # Allow Bluetooth dongles to work
+      ] ++ lib.optionals (!sys.webcam.enable) [
+        "uvcvideo"                                      # Allow webcam to work
+      ];
+
+      kernel.sysctl = {
+        "kernel.ftrace_enabled" = mkDefault false;        # Disable ftrace debugging
+        "kernel.kptr_restrict" = mkOverride 500 2;        # Hide kptrs even for processes with CAP_SYSLOG
+        "kernel.sysrq" = mkDefault 0;                     # The Magic SysRq key is a key combo that allows users connected to the Linux kernel to perform some low-level commands. Disable it, since we don't need it, and is a potential security concern.
+        "kernel.yama.ptrace_scope" = mkDefault 2;         # Restrict ptrace() usage to processes with a pre-defined relationship (e.g., parent/child)
+        "net.core.bpf_jit_enable" = mkDefault false;      # Disable bpf() JIT (to eliminate spray attacks)
+      };
+    };
+
     security = {
-      protectKernelImage = true;
-      lockKernelModules = false; # breaks virtd, wireguard and iptables
-
-      # force-enable the Page Table Isolation (PTI) Linux kernel feature
-      forcePageTableIsolation = true;
-
-      # User namespaces are required for sandboxing. Better than nothing imo.
-      allowUserNamespaces = true;
-
-      # Disable unprivileged user namespaces, unless containers are enabled
-      unprivilegedUsernsClone = config.host.feature.virtualization.docker.enable;
-
-      # apparmor configuration
+      allowSimultaneousMultithreading = mkDefault false;
+      allowUserNamespaces = mkDefault true;     # User namespaces are required for sandboxing. Better than nothing imo.
       apparmor = {
-        enable = true;
-        killUnconfinedConfinables = true;
+        enable = mkDefault true;
+        killUnconfinedConfinables = mkDefault true;
         packages = [ pkgs.apparmor-profiles ];
       };
-
-      # virtualisation
-      virtualisation = {
-        #  flush the L1 data cache before entering guests
-        flushL1DataCache = "always";
-      };
-
-      # log polkit request actions
-      polkit.extraConfig = ''
-        polkit.addRule(function(action, subject) {
-          polkit.log("user " +  subject.user + " is attempting action " + action.id + " from PID " + subject.pid);
-        });
-      '';
-
-      # TODO: make this optional, audit logs get massive really quick
-      auditd.enable = true;
+      auditd.enable = mkDefault true;           # TODO: make this optional, audit logs get massive really quick
       audit = {
-        enable = true;
+        enable = mkDefault true;
         backlogLimit = 8192;
         failureMode = "printk";
         rules = [ "-a exit,always -F arch=b64 -S execve" ];
       };
-
+      forcePageTableIsolation = mkDefault true; # force-enable the Page Table Isolation (PTI) Linux kernel feature
+      lockKernelModules = mkDefault false;      # breaks virtd, wireguard and iptables
       pam = {
-        # fix "too many files open"
-        loginLimits = [
+        loginLimits = [                         # fix "too many files open"
           {
             domain = "@wheel";
             item = "nofile";
@@ -76,85 +90,29 @@ in {
             value = "1048576";
           }
         ];
-
-        services = {
-          swaylock.text = "auth include login";
-          gtklock.text = "auth include login";
-        };
       };
-
+      polkit.extraConfig = ''                   # log polkit request actions
+        polkit.addRule(function(action, subject) {
+          polkit.log("user " +  subject.user + " is attempting action " + action.id + " from PID " + subject.pid);
+        });
+      '';
+      protectKernelImage = mkDefault true;
       sudo = {
-        wheelNeedsPassword = false;
         enable = mkDefault true;
-        execWheelOnly = true;
+        execWheelOnly = mkDefault true;
         extraConfig = ''
-          Defaults lecture = never # rollback results in sudo lectures after each reboot
-          Defaults pwfeedback
           Defaults env_keep += "EDITOR PATH"
-          Defaults timestamp_timeout = 300
+          Defaults lecture = never # rollback results in sudo lectures after each reboot
           Defaults passprompt="[31m sudo: password for %p@%h, running as %U:[0m "
+          Defaults pwfeedback
+          Defaults timestamp_timeout = 300
         '';
+        wheelNeedsPassword = mkDefault false;
+      };
+      unprivilegedUsernsClone = config.host.feature.virtualization.docker.enable; # Disable unprivileged user namespaces, unless containers are enabled
+      virtualisation = {
+        flushL1DataCache = "always";            #  flush the L1 data cache before entering guests
       };
     };
-
-    boot.kernel.sysctl = {
-      # The Magic SysRq key is a key combo that allows users connected to the
-      # system console of a Linux kernel to perform some low-level commands.
-      # Disable it, since we don't need it, and is a potential security concern.
-      "kernel.sysrq" = 0;
-      # Restrict ptrace() usage to processes with a pre-defined relationship
-      # (e.g., parent/child)
-      "kernel.yama.ptrace_scope" = 2;
-      # Hide kptrs even for processes with CAP_SYSLOG
-      "kernel.kptr_restrict" = 2;
-      # Disable bpf() JIT (to eliminate spray attacks)
-      "net.core.bpf_jit_enable" = false;
-      # Disable ftrace debugging
-      "kernel.ftrace_enabled" = false;
-    };
-
-    boot.blacklistedKernelModules = [
-      # Obscure network protocols
-      "ax25"
-      "netrom"
-      "rose"
-      # Old or rare or insufficiently audited filesystems
-      "adfs"
-      "affs"
-      "bfs"
-      "befs"
-      "cramfs"
-      "efs"
-      "erofs"
-      "exofs"
-      "freevxfs"
-      "f2fs"
-      "vivid"
-      "gfs2"
-      "ksmbd"
-      "nfsv4"
-      "nfsv3"
-      "cifs"
-      "nfs"
-      "cramfs"
-      "freevxfs"
-      "jffs2"
-      "hfs"
-      "hfsplus"
-      "squashfs"
-      "udf"
-      "hpfs"
-      "jfs"
-      "minix"
-      "nilfs2"
-      "omfs"
-      "qnx4"
-      "qnx6"
-      "sysv"
-    ] ++ lib.optionals (!sys.webcam.enable) [
-      "uvcvideo" # this is why your webcam no worky
-    ] ++ lib.optionals (!sys.bluetooth.enable) [
-      "btusb" # let bluetooth dongles work
-    ];
   };
 }
