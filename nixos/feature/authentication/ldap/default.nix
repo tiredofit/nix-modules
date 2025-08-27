@@ -59,9 +59,9 @@ in
     };
 
     security.pam.services = {
-      sshd.makeHomeDir = true;
       gdm-launch-environment.makeHomeDir = true;
       login.makeHomeDir = true;
+      sshd.makeHomeDir = true;
       systemd-user.makeHomeDir = true;
     };
 
@@ -70,7 +70,7 @@ in
     };
 
     systemd.tmpfiles.rules = [
-        "L /bin/bash - - - - /run/current-system/sw/bin/bash"  # This is a hack
+        "L /bin/bash - - - - /run/current-system/sw/bin/bash"  # NOTE This is a hack
     ];
   };
 }

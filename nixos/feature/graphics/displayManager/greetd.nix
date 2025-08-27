@@ -27,28 +27,45 @@ with lib;
         sddm = {
           enable = mkForce false;
         };
-      };
+      }
+      // (lib.optionalAttrs (lib.versionAtLeast lib.version "25.11pre") {
+        gdm = {
+          enable = mkForce false;
+        };
+      });
       greetd = {
         enable = mkDefault true;
         settings = {
           default_session = {
-            command = "${pkgs.greetd.tuigreet}/bin/tuigreet --time";
+            command = mkDefault (
+              let
+                greeter = config.host.feature.graphics.displayManager.greetd.greeter.name;
+                gtkgreetBin = if lib.versionAtLeast lib.version "25.11pre" then "${pkgs.gtkgreet}/bin/gtkgreet" else "${pkgs.greetd.gtkgreet}/bin/gtkgreet";
+                regreetBin = if lib.versionAtLeast lib.version "25.11pre" then "${pkgs.regreet}/bin/regreet" else "${pkgs.greetd.regreet}/bin/regreet";
+                tuigreetBin = if lib.versionAtLeast lib.version "25.11pre" then "${pkgs.tuigreet}/bin/tuigreet" else "${pkgs.greetd.tuigreet}/bin/tuigreet";
+              in
+                if greeter == "tuigreet" then "${tuigreetBin} --time"
+                else if greeter == "gtk" then gtkgreetBin
+                else if greeter == "regreet" then regreetBin
+                else tuigreetBin
+            );
             #user = "greeter";
           };
         };
-        ## TODO - Finish this later
       };
 
       xserver = {
         displayManager = {
-          gdm = {
-            enable = mkForce false;
-          };
           lightdm = {
             enable = mkForce false;
           };
           startx.enable = config.services.xserver.enable;
-        };
+        }
+        // (lib.optionalAttrs (!lib.versionAtLeast lib.version "25.11pre") {
+          gdm = {
+            enable = mkForce false;
+          };
+        });
       };
     };
   };

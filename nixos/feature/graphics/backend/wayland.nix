@@ -41,7 +41,7 @@ in {
       xserver = {
         enable = mkDefault false;
         desktopManager = {
-          xterm.enable = false;
+          xterm.enable = mkDefault false;
         };
         xkb.layout = mkDefault "us";
       };
