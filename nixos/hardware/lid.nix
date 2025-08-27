@@ -45,14 +45,22 @@ in
           '';
       };
 
-      logind = {
-        lidSwitchExternalPower = mkDefault "ignore";
-        lidSwitchDocked = mkDefault "ignore";
-        lidSwitch = mkDefault "suspend";
-        extraConfig = ''
+      logind =
+        if lib.versionAtLeast lib.version "25.11pre" then {
+          lidSwitchExternalPower = mkDefault "ignore";
+          lidSwitchDocked = mkDefault "ignore";
+          lidSwitch = mkDefault "suspend";
+          settings.Login = {
+            HandlePowerKey = "ignore";
+          };
+        } else {
+          lidSwitchExternalPower = mkDefault "ignore";
+          lidSwitchDocked = mkDefault "ignore";
+          lidSwitch = mkDefault "suspend";
+          extraConfig = ''
             HandlePowerKey=ignore
-        '';
-      };
+          '';
+        };
     };
   };
 }
