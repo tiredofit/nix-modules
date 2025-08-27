@@ -47,11 +47,11 @@ in
 
       logind =
         if lib.versionAtLeast lib.version "25.11pre" then {
-          lidSwitchExternalPower = mkDefault "ignore";
-          lidSwitchDocked = mkDefault "ignore";
-          lidSwitch = mkDefault "suspend";
           settings.Login = {
-            HandlePowerKey = "ignore";
+            HandleLidSwitchExternalPower = mkDefault "ignore";
+            HandleLidSwitchDocked = mkDefault "ignore";
+            HandleLidSwitch = mkDefault "suspend";
+            HandlePowerKey = mkDefault "ignore";
           };
         } else {
           lidSwitchExternalPower = mkDefault "ignore";
