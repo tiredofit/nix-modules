@@ -21,13 +21,11 @@ with lib;
         enableRedistributableFirmware = mkDefault true;
         asahi = {
           setupAsahiSound = mkForce false;
-          useExperimentalGPUDriver = mkForce false;
           peripheralFirmwareDirectory = "${inputs.asahi-firmware}/m1_mini";
         };
       };
       environment.systemPackages = with pkgs; [
         asahi-bless
-        #asahi-btsync
         asahi-fwextract
       ];
       nixpkgs = {

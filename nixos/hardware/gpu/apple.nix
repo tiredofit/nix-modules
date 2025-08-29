@@ -11,7 +11,6 @@ in
   config = mkIf ((device.cpu == "apple") && (device.gpu == "apple"))  {
     hardware = {
       asahi = {
-        useExperimentalGPUDriver = mkForce true;
       };
     };
   };
