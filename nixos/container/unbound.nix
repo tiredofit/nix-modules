@@ -151,6 +151,11 @@ in
             type = with types; str;
             description = "Interface exclusion pattern";
           };
+          zerotierNetwork = mkOption {
+            default = "";
+            type = with types; str;
+            description = "ZeroTier network ID";
+          };
         };
       };
       hostname = mkOption {
