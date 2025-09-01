@@ -232,6 +232,7 @@ in
       };
 
       networking = {
+        ip = mkDefault "172.19.153.153";  # Fixed IP for DNS
         networks = [
           "services"
         ];
