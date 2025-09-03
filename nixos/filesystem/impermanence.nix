@@ -38,6 +38,13 @@ in
         default = [];
         description = "Files that should be persisted between reboots";
       };
+      persist = {
+        machine-id = mkOption {
+          type = types.bool;
+          default = false;
+          description = "Persist /etc/machine-id across reboots.";
+        };
+      };
     };
   };
 
@@ -139,8 +146,8 @@ in
             "/var/lib/nixos"                   # Persist UID and GID mappings
           ]  ++ cfg_impermanence.directories;
           files = [
-            "/etc/machine-id"
-          ] ++ cfg_impermanence.files;
+          ] ++ cfg_impermanence.files
+            ++ lib.optional cfg_impermanence.persist.machine-id "/etc/machine-id";
         };
     };
 
