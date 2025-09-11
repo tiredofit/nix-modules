@@ -215,19 +215,32 @@ in
       volumes = [
         {
           source = "/var/local/data/_system/${container_name}/certs";
-          target = "/data/certs";
+          target = "/certs";
           createIfMissing = mkDefault true;
           permissions = mkDefault "755";
         }
         #{
         #  source = "/var/local/data/_system/${container_name}/config";
-        #  target = "/data/config";
+        #  target = "/config";
         #  createIfMissing = mkDefault true;
         #  permissions = mkDefault "755";
         #}
         {
+          source = "/var/local/data/_system/${container_name}/data";
+          target = "/data";
+          createIfMissing = mkDefault true;
+          permissions = mkDefault "755";
+        }
+        {
           source = "/var/local/data/_system/${container_name}/logs";
-          target = "/data/logs";
+          target = "/logs";
+          createIfMissing = mkDefault true;
+          removeCOW = mkDefault true;
+          permissions = mkDefault "755";
+        }
+        {
+          source = "/var/local/data/_system/${container_name}/logs";
+          target = "/logs";
           createIfMissing = mkDefault true;
           removeCOW = mkDefault true;
           permissions = mkDefault "755";
@@ -240,20 +253,29 @@ in
         "CONTAINER_ENABLE_MONITORING" = boolToString cfg.monitor;
         "CONTAINER_ENABLE_LOGSHIPPING" = boolToString cfg.logship;
 
+        "TRAEFIK_USER" = mkDefault "traefik";
+
+        "LOG_LEVEL" = mkDefault "WARN";
+        "LOG_TYPE" = mkDefault "FILE";
+        "ACCESS_LOG_TYPE" = mkDefault "FILE";
+
+        "ENABLE_HTTP" = boolToString cfg.ports.http.enable;
         "HTTP_LISTEN_PORT" = toString cfg.ports.http.container;
+        "ENABLE_HTTPS" = boolToString cfg.ports.https.enable;
         "HTTPS_LISTEN_PORT" = toString cfg.ports.https.container;
+        "ENABLE_HTTP3" = boolToString cfg.ports.http3.enable;
         "HTTP3_LISTEN_PORT" = toString cfg.ports.http3.container;
 
-        "DOCKER_ENDPOINT" = cfg.docker.endpoint;
-        "LOG_LEVEL" = mkDefault "WARN";
-        "ACCESS_LOG_TYPE" = mkDefault "FILE";
-        "LOG_TYPE" = mkDefault "FILE";
-        "TRAEFIK_USER" = mkDefault "traefik";
-        "LETSENCRYPT_CHALLENGE" = mkDefault "DNS";
-        "LETSENCRYPT_DNS_PROVIDER" = mkDefault "cloudflare";
-        "LETSENCRYPT_DNS_RESOLVER" = "1.1.1.1:53";
+        "ENABLE_ACME" = mkDefault "TRUE";
+        "ACME_CHALLENGE" = mkDefault "DNS";
+        "ACME_DNS_PROVIDER" = mkDefault "cloudflare";
+        "ACME_DNS_RESOLVER" = "1.1.1.1:53";
+
+        "ENABLE_DOCKER" = "TRUE";
         "DOCKER_CONSTRAINTS" = cfg.docker.constraint;
-        "DASHBOARD_HOSTNAME" = mkDefault "${hostname}.vpn.${config.host.network.domainname}";
+        "DOCKER_ENDPOINT" = cfg.docker.endpoint;
+
+        "DASHBOARD_HOSTNAME" = mkDefault "${hostname}.${config.host.network.domainname}";
       };
 
       labels = {
