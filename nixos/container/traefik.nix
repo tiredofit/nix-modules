@@ -4,7 +4,7 @@ let
   container_name = "traefik";
   container_description = "Enables Traefik reverse proxy container";
   container_image_registry = "docker.io";
-  container_image_name = "docker.io/tiredofit/traefik";
+  container_image_name = "docker.io/nfrastack/traefik";
   container_image_tag = "3.5";
   cfg = config.host.container.${container_name};
   hostname = config.host.network.hostname;
