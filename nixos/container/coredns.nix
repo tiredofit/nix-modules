@@ -4,7 +4,7 @@ let
   container_name = "coredns";
   container_description = "Enables DNS Resolution";
   container_image_registry = "docker.io";
-  container_image_name = "docker.io/tiredofit/coredns";
+  container_image_name = "docker.io/nfrastack/coredns";
   container_image_tag = "latest";
   cfg = config.host.container.${container_name};
   hostname = config.host.network.hostname;
