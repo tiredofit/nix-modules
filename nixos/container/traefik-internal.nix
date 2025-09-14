@@ -240,7 +240,7 @@ in
 
         "TRAEFIK_USER" = mkDefault "traefik";
 
-        "LOG_LEVEL" = mkDefault "WARN";
+        "LOG_LEVEL" = mkDefault "INFO";
         "LOG_TYPE" = mkDefault "FILE";
         "ACCESS_LOG_TYPE" = mkDefault "FILE";
 
@@ -256,7 +256,7 @@ in
         "ACME_DNS_PROVIDER" = mkDefault "cloudflare";
         "ACME_DNS_RESOLVER" = "1.1.1.1:53";
 
-        "ENABLE_DOCKER" = "TRUE";
+        "ENABLE_DOCKER" = mkDefault "TRUE";
         "DOCKER_CONSTRAINTS" = cfg.docker.constraint;
         "DOCKER_ENDPOINT" = cfg.docker.endpoint;
 
