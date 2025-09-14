@@ -309,13 +309,13 @@ in
             ct_restart_sssd
           ;;
           pull)
-            if [ "''${2-}" = "restart" ] ; then pull_str="and restarting containers" ; fi
-            echo "**** [container-tool] Pulling all images $pull_str for compose.yml files (!= .norestart)"
-            ct_pull_restart_containers $2
+            if [ "''${2-}" = "restart" ] ; then pull_str=" AND restarting containers " ; fi
+            echo "**** [container-tool] Pulling all images ''${pull_str:-} for compose.yml files (!= .norestart)"
+            ct_pull_restart_containers ''${2-}
           ;;
           shutdown)
-            if [ "''${2-}" = "nobackup" ] ; then shutdown_str="NOT" ; fi
-            echo "**** [container-tool] Stopping all compose stacks and $shutdown_str backing up databases if a db-backup container exists"
+            if [ "''${2-}" = "nobackup" ] ; then shutdown_str=" NOT " ; fi
+            echo "**** [container-tool] Stopping all compose stacks and''${shutdown_str:-}backing up databases if a db-backup container exists"
             ct_stop_stack
           ;;
           stop)
