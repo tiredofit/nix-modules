@@ -206,7 +206,7 @@ in
           stacks=$($docker_compose_bin ls | $tail_bin -n +2 | $awk_bin '{print $1}')
           for stack in $stacks; do
             stack_image=$($docker_compose_bin -p $stack images | $tail_bin -n +2 |  $awk_bin '{print $1,$2}' | $grep_bin "db-backup")
-            if [ "$1" != "nobackup" ] ; then
+            if [ "''${1:-}" != "nobackup" ] ; then
               if [[ $stack_image =~ .*"db-backup".* ]] ; then
                 stack_container_name=$(echo "$stack_image" | $awk_bin '{print $1}')
                 echo "** Backing up database for '$stack_container_name' before stopping"
@@ -235,7 +235,7 @@ in
               curr_order=("''${curr_order[@]}" "$stack_dir")
             fi
           done
-          if [ "$1" = restart ] ; then
+          if [ "''${1:-}" = restart ] ; then
             ct_pull_restart "''${curr_order[@]}"
           else
             ct_pull_images "''${curr_order[@]}"
