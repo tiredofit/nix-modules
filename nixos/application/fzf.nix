@@ -16,8 +16,11 @@ in
   };
 
   config = mkIf cfg.enable {
-    environment.systemPackages = with pkgs; [
-      fzf
-    ];
+    programs = {
+      fzf = {
+        fuzzyCompletion = mkDefault true;
+        keybindings = mkDefault true;
+      };
+    };
   };
 }
