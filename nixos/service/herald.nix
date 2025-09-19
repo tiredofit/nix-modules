@@ -331,19 +331,26 @@
             }
           ];
 
-      sops.secrets = {
-        ## Only read these secrets if the secret exists
-        "herald/${config.host.network.hostname}.yaml" = lib.mkIf (builtins.pathExists "${config.host.configDir}/hosts/${config.host.network.hostname}/secrets/herald/herald.yml.enc")  {
-          sopsFile = "${config.host.configDir}/hosts/${config.host.network.hostname}/secrets/herald/herald.yml.enc";
-          format = "binary";
-          key = "";
-          restartUnits = [ "herald.service" ];
+        # Ensure herald starts after docker if docker is enabled
+        systemd.services.herald = lib.mkIf config.host.feature.virtualization.docker.enable {
+          after = [ "docker.service" ];
+          requires = [ "docker.service" ];
         };
-        "herald/shared.yaml" = lib.mkIf (builtins.pathExists "${config.host.configDir}/hosts/common/secrets/herald/shared.yml.enc")  {
-          sopsFile = "${config.host.configDir}/hosts/common/secrets/herald/shared.yml.enc";
-          format = "binary";
-          key = "";
-          restartUnits = [ "herald.service" ];
+
+        sops.secrets = {
+          ## Only read these secrets if the secret exists
+          "herald/${config.host.network.hostname}.yaml" = lib.mkIf (builtins.pathExists "${config.host.configDir}/hosts/${config.host.network.hostname}/secrets/herald/herald.yml.enc")  {
+            sopsFile = "${config.host.configDir}/hosts/${config.host.network.hostname}/secrets/herald/herald.yml.enc";
+            format = "binary";
+            key = "";
+            restartUnits = [ "herald.service" ];
+          };
+          "herald/shared.yaml" = lib.mkIf (builtins.pathExists "${config.host.configDir}/hosts/common/secrets/herald/shared.yml.enc")  {
+            sopsFile = "${config.host.configDir}/hosts/common/secrets/herald/shared.yml.enc";
+            format = "binary";
+            key = "";
+            restartUnits = [ "herald.service" ];
+          };
         };
       };
     };
