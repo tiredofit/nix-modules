@@ -21,7 +21,6 @@ in
       };
     };
 
-
     environment.variables.BROWSER = "echo";           # Print the URL instead on servers
 
     fonts.fontconfig.enable = mkDefault false;        # No GUI
