@@ -10,6 +10,7 @@ with lib;
     ./powermanagement
     ./virtualization
     ./appimage.nix
+    ./console.nix
     ./cross_compilation.nix
     ./documentation.nix
     ./home_manager.nix
