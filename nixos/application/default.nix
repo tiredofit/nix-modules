@@ -25,6 +25,7 @@ with lib;
     ./less.nix
     ./links.nix
     ./liquidprompt.nix
+    ./lnav.nix
     ./lsof.nix
     ./mtr.nix
     ./nano.nix
