@@ -14,7 +14,7 @@ in
   options = {
     host.feature.graphics.windowManager = {
       manager = mkOption {
-        type = types.enum ["cage" "cinnamon" "gnome" "hyprland" "openbox" null];
+        type = types.enum ["cinnamon" "hyprland" null];
         default = null;
         description = "Window Manager to use";
       };
