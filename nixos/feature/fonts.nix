@@ -17,61 +17,56 @@ in
   };
 
   config = mkIf cfg.enable {
-  # all fonts are linked to /nix/var/nix/profiles/system/sw/share/X11/fonts
     fonts = mkIf graphics.enable {
       enableDefaultPackages = false;
       fontDir.enable = true;
       packages = with pkgs; [
-        caladea
-        cantarell-fonts
-        carlito
-        courier-prime
         dejavu_fonts
-        font-awesome
-        gelasio
         liberation_ttf
-        material-design-icons
-        merriweather
+        #material-design-icons
+        nerd-fonts.hack
+        nerd-fonts.noto
+        nerd-fonts.ubuntu
         noto-fonts
-        noto-fonts-emoji
+        noto-fonts-color-emoji
         open-sans
         roboto
         ubuntu_font_family
-        weather-icons
+      ];
 
-      ] ++ (
-        if (lib.versionAtLeast lib.version "25.05pre") then [
-          nerd-fonts.droid-sans-mono
-          nerd-fonts.hack
-          nerd-fonts.jetbrains-mono
-          nerd-fonts.noto
-          nerd-fonts.zed-mono
-        ] else [
-          (nerdfonts.override {
-            fonts = [
-              "DroidSansMono"
-              "Hack"
-              "JetBrainsMono"
-              "Noto"
-            ];
-          })
-        ]
-      );
-
-      # user defined fonts
-      # the reason there's Noto Color Emoji everywhere is to override DejaVu's
-      # B&W emojis that would sometimes show instead of some Color emojis
       fontconfig = mkIf graphics.enable {
         enable = mkDefault true;
         antialias = mkDefault true;
         cache32Bit = mkDefault false;
-        hinting.enable = mkDefault true;
-        hinting.autohint = mkDefault true;
+        hinting = {
+          enable = mkDefault true;
+          autohint = mkDefault false;
+        };
         defaultFonts = {
-          serif = [ "Noto Serif NF" "Noto Color Emoji" ];
-          sansSerif = [ "Noto Sans NF" "Noto Color Emoji" ];
-          monospace = [ "Hack Nerd Font" "Noto Color Emoji" ];
-          emoji = [ "Noto Color Emoji" ];
+          serif = [
+            "Noto Serif NF"
+            "Noto Serif"
+            "Liberation Serif"
+            "DejaVu Serif"
+          ];
+          sansSerif = [
+            "Noto Sans NF"
+            "Noto Sans"
+            "Roboto"
+            "Open Sans"
+            "Liberation Sans"
+            "DejaVu Sans"
+          ];
+          monospace = [
+            "Hack Nerd Font"
+            "NotoSansM Nerd Font Mono"
+            "Noto Sans Mono"
+            "DejaVu Sans Mono"
+            "Liberation Mono"
+          ];
+          emoji = [
+            "Noto Color Emoji"
+          ];
         };
       };
     };
