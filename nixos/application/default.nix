@@ -4,6 +4,7 @@ let
   dir = ./.;
   files = builtins.readDir dir;
   ignoreList = [
+    "template.nix"
   ];
   importable = lib.filterAttrs (name: type:
     (type == "regular" && lib.hasSuffix ".nix" name && name != "default.nix" && !(lib.elem name ignoreList))
