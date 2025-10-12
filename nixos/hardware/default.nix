@@ -1,25 +1,25 @@
-{lib, ...}:
+{ lib, ... }:
 
-with lib;
-{
-  imports = [
-    ./android.nix
-    ./backlight.nix
-    ./bluetooth.nix
-    ./cpu
-    ./fingerprint.nix
-    ./firmware.nix
-    ./gpu
-    ./keyboard.nix
-    ./lid.nix
-    ./monitors.nix
-    ./printing.nix
-    ./raid.nix
-    ./scanner.nix
-    ./sound.nix
-    ./touchpad.nix
-    ./webcam.nix
-    ./wireless.nix
-    ./yubikey.nix
+let
+  dir = ./.;
+  files = builtins.readDir dir;
+  ignoreList = [
   ];
+  importable = lib.filterAttrs (name: type:
+    (type == "regular" && lib.hasSuffix ".nix" name && name != "default.nix" && !(lib.elem name ignoreList))
+    || (
+      type == "directory"
+      && name != "default.nix"
+      && !(lib.elem name ignoreList)
+      && builtins.pathExists (dir + "/${name}/default.nix")
+    )
+  ) files;
+  imports = lib.mapAttrsToList (name: type:
+    if type == "regular"
+    then ./${name}
+    else ./${name}/default.nix
+  ) importable;
+in
+{
+  imports = imports;
 }

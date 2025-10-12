@@ -1,43 +1,25 @@
-{lib, ...}:
+{ lib, ... }:
 
-with lib;
-{
-  imports = [
-    ./bash.nix
-    ./bind.nix
-    ./binutils.nix
-    ./busybox.nix
-    ./comma.nix
-    ./coreutils.nix
-    ./curl.nix
-    ./diceware.nix
-    ./direnv.nix
-    ./dust.nix
-    ./e2fsprogs.nix
-    ./fzf.nix
-    ./git.nix
-    ./htop.nix
-    ./iftop.nix
-    ./inetutils.nix
-    ./iotop.nix
-    ./lazydocker.nix
-    ./less.nix
-    ./links.nix
-    ./liquidprompt.nix
-    ./lnav.nix
-    ./lsof.nix
-    ./mtr.nix
-    ./nano.nix
-    ./ncdu.nix
-    ./openbao.nix
-    ./pciutils.nix
-    ./psmisc.nix
-    ./rclone.nix
-    ./ripgrep.nix
-    ./rsync.nix
-    ./strace.nix
-    ./tmux.nix
-    ./wget.nix
-    ./zoxide.nix
+let
+  dir = ./.;
+  files = builtins.readDir dir;
+  ignoreList = [
   ];
+  importable = lib.filterAttrs (name: type:
+    (type == "regular" && lib.hasSuffix ".nix" name && name != "default.nix" && !(lib.elem name ignoreList))
+    || (
+      type == "directory"
+      && name != "default.nix"
+      && !(lib.elem name ignoreList)
+      && builtins.pathExists (dir + "/${name}/default.nix")
+    )
+  ) files;
+  imports = lib.mapAttrsToList (name: type:
+    if type == "regular"
+    then ./${name}
+    else ./${name}/default.nix
+  ) importable;
+in
+{
+  imports = imports;
 }
