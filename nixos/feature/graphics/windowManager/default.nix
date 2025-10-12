@@ -5,10 +5,7 @@ in
   with lib;
 {
   imports = [
-    ./cage.nix
-    ./gnome.nix
     ./hyprland.nix
-    ./openbox.nix
   ];
 
   options = {
