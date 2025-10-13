@@ -351,7 +351,7 @@ in
           after = [ "docker.service" ];
           serviceConfig = {
             Type = "oneshot";
-            ExecCondition = "/bin/sh -c '[ $(${pkgs.gawk}/bin/awk \"{print int(\$1)}\" /proc/uptime) -lt 300 ]'";
+            ExecCondition = "/bin/sh -c '[ $(${pkgs.gawk}/bin/awk \'{print int(\$1)}\' /proc/uptime) -lt 300 ]'";
             ExecStart = [
               "/bin/sh -c 'echo \"Executing system startup container management tasks\"'"
               "/run/current-system/sw/bin/container-tool stop"
