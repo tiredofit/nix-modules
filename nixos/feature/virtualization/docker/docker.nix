@@ -324,8 +324,15 @@ in
           ${config.virtualisation.docker.package}/bin/docker network inspect ${name} > /dev/null || \
             ${config.virtualisation.docker.package}/bin/docker network create ${name} --subnet ${net.subnet}${if net.driver != null then " --driver ${net.driver}" else ""}
         '';
+        dockerCheck = ''
+          # Only proceed if the Docker socket is available
+          if [ ! -S /var/run/docker.sock ]; then
+            echo "Docker socket not available, skipping docker network creation"
+            exit 0
+          fi
+        '';
       in
-        concatStringsSep "\n" (mapAttrsToList mkCreate networks);
+        dockerCheck + "\n" + concatStringsSep "\n" (mapAttrsToList mkCreate networks);
 
     users.groups.docker = {
       members = mkDefault cfg.groupMembers;
