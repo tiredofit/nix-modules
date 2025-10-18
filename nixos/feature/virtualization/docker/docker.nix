@@ -332,7 +332,8 @@ in
           fi
         '';
       in
-        dockerCheck + "\n" + concatStringsSep "\n" (mapAttrsToList mkCreate networks);
+        #dockerCheck + "\n" + concatStringsSep "\n" (mapAttrsToList mkCreate networks);
+        concatStringsSep "\n" (mapAttrsToList mkCreate networks);
 
     users.groups.docker = {
       members = mkDefault cfg.groupMembers;
