@@ -22,6 +22,11 @@ in
           type = with types; bool;
           description = "Enables virtd virtualiation daemon";
         };
+        makeImpermanent = mkOption {
+          default = true;
+          type = with types; bool;
+          description = "When true and daemon.enable is true, mark /var/lib/libvirt as impermanent";
+        };
       };
     };
   };
@@ -51,8 +56,8 @@ in
       polkit.enable = true;
     };
 
-    host.filesystem.impermanence.directories = mkIf ((config.host.filesystem.impermanence.enable)) [
-      "/var/lib/libvirt"                 # Libvirt
+    host.filesystem.impermanence.directories = mkIf ((config.host.filesystem.impermanence.enable) && (cfg_daemon.enable && cfg_daemon.makeImpermanent)) [
+      "/var/lib/libvirt"
     ];
   }];
 }
