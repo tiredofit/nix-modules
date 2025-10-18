@@ -66,7 +66,7 @@ in
         sound.enable = mkDefault true;        #
         touchpad.enable = mkDefault true;     # We want this most of the time
         webcam.enable = mkDefault true;       # Age of video conferencing
-        wireless.enable = mkDefault true;     # Most systems have some sort of 802.11
+        wireless.enable = mkDefault true;     # Most systems have some sort of 802.1
         yubikey.enable = mkDefault true;      #
       };
       network = {

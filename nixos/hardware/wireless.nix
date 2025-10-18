@@ -22,7 +22,7 @@ in
 
   config = mkIf cfg.enable {
     boot.extraModprobeConfig = ''
-      options cfg80211 ieee80211_regdom="CA"
+      options cfg80211 ieee80211_regdom="US"
     '';
 
     environment.systemPackages = with pkgs; [
@@ -36,6 +36,14 @@ in
       "/var/lib/iwd"
     ];
 
-    networking.wireless.iwd.enable = mkDefault (cfg.backend == "iwd");
+    networking = {
+      wireless.enable = if cfg.backend == "wpa_supplicant"
+        then lib.mkDefault true
+        else lib.mkForce false;
+
+      wireless.iwd.enable = lib.mkDefault (cfg.backend == "iwd");
+
+      networkmanager.wifi.backend = lib.mkDefault (if cfg.backend == "iwd" then "iwd" else "wpa_supplicant");
+    };
   };
 }
