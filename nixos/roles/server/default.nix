@@ -84,7 +84,6 @@ in
       network = {
         firewall.fail2ban.enable = mkDefault true;
         manager = mkDefault "systemd-networkd";
-        #wired.enable = mkDefault true;
       };
       service = {
         logrotate.enable = mkDefault true;
