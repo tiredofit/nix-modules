@@ -1,6 +1,7 @@
 {config, lib, pkgs, ...}:
 let
-  cfg = config.host.network.manager;
+  rawCfg = config.host.network.manager;
+  cfg = if rawCfg == "networkd" then "systemd-networkd" else rawCfg;
 in
   with lib;
 {
@@ -15,7 +16,6 @@ in
   config = {
     host.filesystem.impermanence.directories = mkIf (config.host.filesystem.impermanence.enable) (
       [
-        # Always include these directories if impermanence is enabled
       ] ++
       (if cfg == "networkmanager" then [
         "/etc/NetworkManager"
@@ -24,9 +24,8 @@ in
     );
 
     networking = {
-      networkmanager = mkIf (cfg == "networkmanager") {
-        enable = true;
-      };
+      useNetworkd = mkDefault (cfg == "systemd-networkd");
+      networkmanager.enable = mkDefault (cfg == "networkmanager");
     };
 
     services = {
@@ -35,16 +34,14 @@ in
       };
     };
 
-    # https://github.com/systemd/systemd/blob/e1b45a756f71deac8c1aa9a008bd0dab47f64777/NEWS#L13
-    systemd.services.NetworkManager-wait-online.enable = mkIf (cfg == "networkmanager") false;
-    systemd.network.wait-online.enable =  mkIf (cfg == "systemd-networkd") false;
-
-    # Do not take down the network for too long when upgrading,
-    # This also prevents failures of services that are restarted instead of stopped.
-    # It will use `systemctl restart` rather than stopping it with `systemctl stop`
-    # followed by a delayed `systemctl start`.
-    systemd.services.systemd-networkd.stopIfChanged = mkIf (cfg == "systemd-networkd") false;
-    # Services that are only restarted might be not able to resolve when resolved is stopped before
-    systemd.services.systemd-resolved.stopIfChanged = false;
+    systemd = {
+      network.wait-online.enable =  mkIf (cfg == "systemd-networkd") false;
+      services = {
+        systemd-networkd-wait-online.enable = if cfg == "systemd-networkd" then pkgs.lib.mkForce false else mkDefault (cfg == "systemd-networkd");
+        systemd-networkd.stopIfChanged = if cfg == "systemd-networkd" then pkgs.lib.mkForce false else false;
+        systemd-resolved.stopIfChanged = false;
+        NetworkManager-wait-online.enable = mkIf (cfg == "networkmanager") false;
+      };
+    };
   };
 }
