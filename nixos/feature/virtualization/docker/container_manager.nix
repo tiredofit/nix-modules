@@ -89,7 +89,7 @@ in
         DOCKER_COMPOSE_STACK_DATA_PATH=''${DOCKER_COMPOSE_STACK_DATA_PATH:-"/var/local/data/"}
         DOCKER_STACK_SYSTEM_DATA_PATH=''${DOCKER_STACK_SYSTEM_DATA_PATH:-"/var/local/data/_system/"}
         DOCKER_COMPOSE_STACK_APP_RESTART_FIRST=''${DOCKER_COMPOSE_STACK_APP_RESTART_FIRST:-"auth.example.com"}
-        DOCKER_STACK_SYSTEM_APP_RESTART_ORDER=''${DOCKER_STACK_SYSTEM_APP_RESTART_ORDER:-"socket-proxy coredns error-pages traefik traefik-internal unbound openldap postfix-relay llng-handler restic clamav zabbix"}
+        DOCKER_STACK_SYSTEM_APP_RESTART_ORDER=''${DOCKER_STACK_SYSTEM_APP_RESTART_ORDER:-"socket-proxy coredns error-pages traefik traefik-internal unbound openldap postfix-relay llng-handler restic clamav zabbix zabbix-proxy"}
 
         ###
         #  system directory: $DOCKER_STACK_SYSTEM_DATA_PATH
