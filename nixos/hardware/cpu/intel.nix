@@ -10,6 +10,9 @@ in
       intel-gpu-tools
     ];
 
+    # Enable qemu-guest services when running in a VM (vm-intel)
+    services.qemuGuest.enable = mkDefault (device.cpu == "vm-intel");
+
     hardware.cpu.intel.updateMicrocode = true;
 
     host.feature.boot.kernel = {
