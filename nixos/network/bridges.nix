@@ -5,15 +5,13 @@ with lib;
 let
   bridges = config.host.network.bridges or { };
   interfaces = config.host.network.interfaces or { };
-  legacyWired = config.host.network.wired or { };
 
   resolveIface = iface: let
-    entry = if interfaces ? iface then interfaces.${iface} else (if legacyWired ? iface then legacyWired.${iface} else null);
+    entry = if interfaces ? iface then interfaces.${iface} else null;
   in let
     firstNonNull = xs: builtins.head (builtins.filter (x: x != null) xs);
   matchCandidates = if entry != null && (entry ? match && entry.match != null) then [ entry.match.name entry.match.mac entry.match.permanentMac entry.match.path entry.match.originalName ] else [ ];
-  legacyCandidates = if entry != null then [ (if (entry ? matchName && entry.matchName != null) then entry.matchName else null) (if (entry ? mac && entry.mac != null) then entry.mac else null) ] else [ ];
-  in (if (matchCandidates ++ legacyCandidates) == [] then iface else firstNonNull (matchCandidates ++ legacyCandidates));
+  in (if matchCandidates == [] then iface else firstNonNull matchCandidates);
 
   mkMatchAttrs = m: lib.filterAttrs (k: v: v != null) {
     Name = m.name;
