@@ -54,7 +54,7 @@ in
       (lib.mkIf ((cfg_impermanence.enable) && (!cfg_encrypt.enable) && (config.host.filesystem.btrfs.enable)) {
         postDeviceCommands = pkgs.lib.mkBefore ''
           mkdir -p /mnt
-          mount -o subvol=/ /dev/disk/by-partlabel/rootfs /mnt
+          mount -o subvol=/ /dev/disk/by-partlabel/pool0_0 /mnt
           btrfs subvolume list -o /mnt/${cfg_impermanence.root-subvol} | cut -f9 -d' ' |
           while read subvolume; do
               echo "Deleting /$subvolume subvolume"
