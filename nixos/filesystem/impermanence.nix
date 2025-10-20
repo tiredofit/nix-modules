@@ -54,7 +54,41 @@ in
       (lib.mkIf ((cfg_impermanence.enable) && (!cfg_encrypt.enable) && (config.host.filesystem.btrfs.enable)) {
         postDeviceCommands = pkgs.lib.mkBefore ''
           mkdir -p /mnt
-          mount -o subvol=/ /dev/disk/by-partlabel/pool0_0 /mnt
+          set -x
+          # Find a btrfs device that contains the configured root subvolume.
+          # Prefer blkid-discovered btrfs devices for faster and more accurate filtering.
+          find_btrfs_device() {
+            root_subvol='${cfg_impermanence.root-subvol}'
+
+            # iterate blkid results without using a pipe/while (avoid subshells so return works)
+            for d in $(blkid -o device -t TYPE=btrfs 2>/dev/null); do
+              [ -e "$d" ] || continue
+              echo "[impermanence] checking $d" >&2
+              _tmp=$(mktemp -d) || continue
+              if mount -o ro "$d" "$_tmp" 2>/dev/null; then
+                if btrfs subvolume list "$_tmp" 2>/dev/null | awk '{print $9}' | grep -qx "$root_subvol"; then
+                  umount "$_tmp" 2>/dev/null || true
+                  rmdir "$_tmp" 2>/dev/null || true
+                  echo "$d"
+                  return 0
+                fi
+                umount "$_tmp" 2>/dev/null || true
+              fi
+              rmdir "$_tmp" 2>/dev/null || true
+            done
+
+            return 1
+          }
+
+          btrfs_root_device=$(find_btrfs_device)
+          find_rc=$?
+          if [ $find_rc -ne 0 ] || [ -z "$btrfs_root_device" ]; then
+            echo "[impermanence] Could not find btrfs device containing subvolume ${cfg_impermanence.root-subvol}" >&2
+            exit 1
+          fi
+
+          echo "[impermanence] using $btrfs_root_device" >&2
+          mount -o subvol=/ "$btrfs_root_device" /mnt
           btrfs subvolume list -o /mnt/${cfg_impermanence.root-subvol} | cut -f9 -d' ' |
           while read subvolume; do
               echo "Deleting /$subvolume subvolume"
@@ -66,6 +100,7 @@ in
           btrfs subvolume snapshot /mnt/${cfg_impermanence.blank-root-subvol} /mnt/${cfg_impermanence.root-subvol}
           mkdir -p /mnt/${cfg_impermanence.root-subvol}/mnt
           umount /mnt
+          set +x
         '';
       })
 
@@ -87,7 +122,83 @@ in
             serviceConfig.Type = "oneshot";
             script = ''
               mkdir -p /mnt
-              mount -o subvol=/ /dev/mapper/${cfg_encrypt.encrypted-partition} /mnt
+              # If encrypted, prefer blkid-discovered btrfs devices and the specified mapper device.
+              find_btrfs_device() {
+                root_subvol='${cfg_impermanence.root-subvol}'
+                mapper=/dev/mapper/${cfg_encrypt.encrypted-partition}
+
+                if [ -e "$mapper" ]; then
+                  echo "[impermanence] checking mapper $mapper" >&2
+                  _tmp=$(mktemp -d) || true
+                  if [ -n "$_tmp" ] && mount -o ro "$mapper" "$_tmp" 2>/dev/null; then
+                    if btrfs subvolume list "$_tmp" 2>/dev/null | awk '{print $9}' | grep -qx "$root_subvol"; then
+                      umount "$_tmp" 2>/dev/null || true
+                      rmdir "$_tmp" 2>/dev/null || true
+                      echo "$mapper" && return 0
+                    fi
+                    umount "$_tmp" 2>/dev/null || true
+                  fi
+                  rmdir "$_tmp" 2>/dev/null || true
+                fi
+
+                # Use blkid first to limit candidates
+                blkid -o device -t TYPE=btrfs 2>/dev/null | while read d; do
+                  [ -e "$d" ] || continue
+                  echo "[impermanence] checking $d" >&2
+                  _tmp=$(mktemp -d) || continue
+                  if mount -o ro "$d" "$_tmp" 2>/dev/null; then
+                    if btrfs subvolume list "$_tmp" 2>/dev/null | awk '{print $9}' | grep -qx "$root_subvol"; then
+                      umount "$_tmp" 2>/dev/null || true
+                      rmdir "$_tmp" 2>/dev/null || true
+                      echo "$d" && return 0
+                    fi
+                    umount "$_tmp" 2>/dev/null || true
+                  fi
+                  rmdir "$_tmp" 2>/dev/null || true
+                done
+
+                for dev in $(ls /dev/mapper 2>/dev/null | sed 's/^/\/dev\/mapper\//'); do
+                  [ -e "$dev" ] || continue
+                  echo "[impermanence] checking $dev" >&2
+                  _tmp=$(mktemp -d) || continue
+                  if mount -o ro "$dev" "$_tmp" 2>/dev/null; then
+                    if btrfs subvolume list "$_tmp" 2>/dev/null | awk '{print $9}' | grep -qx "$root_subvol"; then
+                      umount "$_tmp" 2>/dev/null || true
+                      rmdir "$_tmp" 2>/dev/null || true
+                      echo "$dev" && return 0
+                    fi
+                    umount "$_tmp" 2>/dev/null || true
+                  fi
+                  rmdir "$_tmp" 2>/dev/null || true
+                done
+
+                for dev in /dev/*[0-9] /dev/nvme*n*p* /dev/sd*; do
+                  [ -e "$dev" ] || continue
+                  echo "[impermanence] checking $dev" >&2
+                  _tmp=$(mktemp -d) || continue
+                  if mount -o ro "$dev" "$_tmp" 2>/dev/null; then
+                    if btrfs subvolume list "$_tmp" 2>/dev/null | awk '{print $9}' | grep -qx "$root_subvol"; then
+                      umount "$_tmp" 2>/dev/null || true
+                      rmdir "$_tmp" 2>/dev/null || true
+                      echo "$dev" && return 0
+                    fi
+                    umount "$_tmp" 2>/dev/null || true
+                  fi
+                  rmdir "$_tmp" 2>/dev/null || true
+                done
+
+                return 1
+              }
+
+              BTRFS_DEV=$(find_btrfs_device)
+              find_rc=$?
+              if [ $find_rc -ne 0 ] || [ -z "$BTRFS_DEV" ]; then
+                echo "[impermanence] Could not find btrfs device containing subvolume ${cfg_impermanence.root-subvol}" >&2
+                exit 1
+              fi
+
+              echo "[impermanence] using $BTRFS_DEV" >&2
+              mount -o subvol=/ "$BTRFS_DEV" /mnt
               btrfs subvolume list -o /mnt/${cfg_impermanence.root-subvol} | cut -f9 -d' ' |
               while read subvolume; do
                 echo "Deleting /$subvolume subvolume"
