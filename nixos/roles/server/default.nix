@@ -84,7 +84,7 @@ in
       network = {
         firewall.fail2ban.enable = mkDefault true;
         manager = mkDefault "systemd-networkd";
-        wired.enable = mkDefault true;
+        #wired.enable = mkDefault true;
       };
       service = {
         logrotate.enable = mkDefault true;
@@ -106,7 +106,7 @@ in
         logRefusedConnections = mkDefault true;
       };
       useDHCP = mkDefault false;
-      useNetworkd = mkDefault false;
+      #useNetworkd = mkDefault false;
     };
 
     systemd = {
