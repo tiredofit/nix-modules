@@ -272,7 +272,7 @@ in
         }
 
         ct_restart_sssd() {
-          if pgrep -x "sssd" >/dev/null ; then
+          if ${pkgs.procps}/bin/pgrep -x "sssd" >/dev/null ; then
               echo "**** [container-tool] Restarting SSSD"
               $dsudo systemctl restart sssd
           fi
@@ -351,7 +351,8 @@ in
           after = [ "docker.service" ];
           serviceConfig = {
             Type = "oneshot";
-            ExecCondition = "/bin/sh -c '[ $(${pkgs.gawk}/bin/awk \'{print int(\$1)}\' /proc/uptime) -lt 300 ]'";
+            # Run only on recent boots (uptime < 300s). Use awk to return 0 when uptime < 300.
+            ExecCondition = "${pkgs.gawk}/bin/awk '{exit (int($1) >= 300)}' /proc/uptime";
             ExecStart = [
               "/bin/sh -c 'echo \"Executing system startup container management tasks\"'"
               "/run/current-system/sw/bin/container-tool stop"
