@@ -54,7 +54,7 @@ in
       (lib.mkIf ((cfg_impermanence.enable) && (!cfg_encrypt.enable) && (config.host.filesystem.btrfs.enable)) {
         postDeviceCommands = pkgs.lib.mkBefore ''
           mkdir -p /mnt
-          set -x
+
           # Find a btrfs device that contains the configured root subvolume.
           # Prefer blkid-discovered btrfs devices for faster and more accurate filtering.
           find_btrfs_device() {
@@ -100,7 +100,6 @@ in
           btrfs subvolume snapshot /mnt/${cfg_impermanence.blank-root-subvol} /mnt/${cfg_impermanence.root-subvol}
           mkdir -p /mnt/${cfg_impermanence.root-subvol}/mnt
           umount /mnt
-          set +x
         '';
       })
 
