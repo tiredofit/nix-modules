@@ -7,10 +7,6 @@ with lib;
     host.network.interfaces = mkOption {
       type = types.attrsOf (types.submodule {
         options = {
-          # Structured match block: prefer using these fields to select the
-          # device. This is the canonical place to specify match criteria such
-          # as name, mac, permanentMac, path and originalName. We keep the
-          # legacy `mac` and `matchName` at the top-level for compatibility.
           match = mkOption {
             type = types.nullOr (types.submodule {
               options = {
@@ -91,7 +87,7 @@ with lib;
     in let
       linkFiles = mapAttrsToList (n: i:
         let
-          path = "systemd/network/10-" + n + ".link";
+          path = "systemd/network/05-" + n + ".link";
           m = if (i ? match && i.match != null) then i.match else null;
           present = if m != null then lib.filterAttrs (k: v: v != null) {
             Name = if m.name != null then m.name else null;
@@ -113,12 +109,6 @@ with lib;
         assertion = ((i ? mac && i.mac != null) || (i ? matchName && i.matchName != null) || (i ? match && i.match != null));
         message = "[host.network.interfaces." + name + "] Provide either 'mac', 'matchName' or 'match' to identify the interface";
       }]) (builtins.attrNames ifaces));
-
-    # Emit explicit .link files into /etc/systemd/network so they contain
-    # both [Match] and [Link] sections. The previous approach using
-    # `systemd.network.links` did not render match criteria into the file on
-    # disk on all systems, so we build the files ourselves here. We still
-    # prefer the structured `match` submodule, with legacy fallbacks allowed.
       environment.etc = mkIf config.networking.useNetworkd (listToAttrs linkFiles);
   };
 }
