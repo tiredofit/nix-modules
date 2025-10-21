@@ -7,8 +7,6 @@ with lib;
     host.network.networks = mkOption {
       type = types.attrsOf (types.submodule {
         options = {
-          # Structured match block for network-level matching (preferred).
-          # Use `match.name` to set Name=, or other keys for MAC/Path/etc.
           match = mkOption {
             type = types.nullOr (types.submodule {
               options = {
@@ -66,6 +64,11 @@ with lib;
             description = "DHCP client identifier to use for this network.";
             example = "my-client-id";
           };
+          gatewayOnLink = mkOption {
+            type = types.nullOr types.bool;
+            default = null;
+            description = "Optional override for whether the route's GatewayOnLink should be set. If null, it's auto-set for /32 addresses.";
+          };
         };
       });
       default = { };
@@ -75,6 +78,8 @@ with lib;
 
   config = let
     networks = config.host.network.networks or { };
+    interfaces = config.host.network.interfaces or { };
+    bridges = config.host.network.bridges or { };
 
     mkEntry = name: net:
       let
@@ -84,26 +89,51 @@ with lib;
         networkConfig = baseNetworkConfig // (if net.type == "dynamic" then {
           DHCP = "yes";
         } else if net.type == "static" then {
-          Gateway = net.gateway;
-          DNS = if net.dns != null then concatStringsSep " " net.dns else null;
+          DNS = if net.dns != null then net.dns else null;
         } else { });
-        value = {
-          matchConfig = if net.match != null then
-            let m = net.match; in filterAttrs (k: v: v != null) {
-              Name = m.name;
-              MACAddress = m.mac;
-              PermanentMACAddress = m.permanentMac;
-              Path = m.path;
-              OriginalName = m.originalName;
-            }
+        networkConfigFiltered = let nc = filterAttrs (k: v: v != null) networkConfig; in
+          if builtins.length (builtins.attrNames nc) == 0 then null else nc;
+        value = let
+          explicitMatch = if net.match != null then net.match else null;
+          bridgeMac = if explicitMatch == null || explicitMatch.mac == null then
+            if bridges ? name then
+              let b = bridges.${name};
+                firstIf = if b.interfaces != null && b.interfaces != [] then builtins.head b.interfaces else null;
+              in if firstIf != null && interfaces ? firstIf && interfaces.${firstIf} ? match && interfaces.${firstIf}.match != null && interfaces.${firstIf}.match.mac != null then
+                interfaces.${firstIf}.match.mac
+              else null
+            else null
+          else null;
+
+          m = if explicitMatch != null then explicitMatch else null;
+
+          matchAttrs = if m != null then filterAttrs (k: v: v != null) {
+            Name = m.name;
+            MACAddress = m.mac;
+            PermanentMACAddress = m.permanentMac;
+            Path = m.path;
+            OriginalName = m.originalName;
+          }
+          else if bridgeMac != null then { MACAddress = bridgeMac; }
           else { Name = name; };
-          networkConfig = filterAttrs (k: v: v != null) networkConfig;
+
+        in let
+          is32 = if net.ip != null then (builtins.match ".*/32$" net.ip) != null else false;
+          gwOnLink = if net.gatewayOnLink != null then net.gatewayOnLink else is32;
+        in {
+          matchConfig = matchAttrs;
+          networkConfig = networkConfigFiltered;
+          routes = if net.type == "static" && net.gateway != null then [{
+            Gateway = net.gateway;
+            GatewayOnLink = if gwOnLink then true else false;
+          }] else [ ];
           addresses = if net.type == "static" && net.ip != null then
             [ { Address = net.ip; } ]
           else [ ];
           dhcpV4Config = if net.dhcpClientIdentifier != null then {
             ClientIdentifier = net.dhcpClientIdentifier;
           } else { };
+          linkConfig = if net.type == "static" then { RequiredForOnline = "routable"; } else { };
         };
       in {
         name = name;
