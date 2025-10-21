@@ -1,23 +1,18 @@
 # Network configuration
 
-This file shows the pattern we use for describing network topology in NixOS hosts: define physical interfaces (and VLANs), declare bridge devices that form the topology, and add higher-level `networks` entries which bind devices together and provide addressing or additional systemd-networkd configuration.
+For host.networking.manager="systemd-networkd".
+- Define physical `interfaces` (and VLANs) (`05-` and `10-` prefixes)
+- Declare `bridges` devices that form the topology (`20-*.netdev` files)
+- Declare networks-level `networks` entries which bind devices together and provide addressing
 
-The configuration is composed of three primary sections:
+- Device naming and matching:
+  - `phys0` in the example is a logical name used throughout the configuration. Prefer stable matching by `mac` where possible so names don't change when the kernel orders devices differently. `match.name` can be used with the kernel/udev name (for example `enp1s0f0`) or with glob patterns (`vm-lan-*`).
 
-- `interfaces` — logical descriptions of physical NICs and their child VLAN devices.
-- `bridges` — the bridge netdevs (topology) that will be created and can include physical or VLAN interfaces.
-- `networks` — match-based rules that apply networkd configuration (bridge membership, IP addressing, DHCP, etc.) and can also attach VLANs to physical devices.
+- `interfaces` section:
+  - Describes physical NICs and any VLAN children. Each VLAN has an `id` (the numeric VLAN tag) and a `name` — the logical device name that other parts of the config refer to (for bridge membership, network matching, etc.).
+  - Fields like `mtu`, `wakeOnLan`, and `linkLocalAddressing` are optional and passed through to the low-level interface provisioning.
 
-Below is the example configuration (unchanged) followed by detailed commentary and usage notes.
-
-  - Device naming and matching:
-  - `phys0` in the example is a logical name used throughout the configuration. Prefer stable matching by `mac` where possible so names don't change when the kernel orders devices differently. `match = { name }` can be used with the kernel/udev name (for example `enp1s0f0`) or with glob patterns (`vm-lan-*`).
-
-  - `interfaces` section:
-    - Describes physical NICs and any VLAN children. Each VLAN has an `id` (the numeric VLAN tag) and a `name` — the logical device name that other parts of the config refer to (for bridge membership, network matching, etc.).
-    - Fields like `mtu`, `wakeOnLan`, and `linkLocalAddressing` are optional and passed through to the low-level interface provisioning.
-
-```
+```nix
   network = {
     interfaces = {
       phys0 = { # physical NIC renamed to phys0 via match.mac (preferred) or match.name
@@ -53,11 +48,12 @@ Below is the example configuration (unchanged) followed by detailed commentary a
       };
     };
 ```
+
     - Bridge declarations (topology). Bridge netdevs are created by the bridge module.
       - Declares bridge netdevs (created by the bridge module). `interfaces` lists the device names (physical or VLAN names) to attach to that bridge. `stp` controls Spanning Tree Protocol if you are connecting multiple switches/bridges.
       - `match.name` can be left null if the bridge `name` is authoritative. When present, `match.name` controls which runtime device the `networks` matching will look for.
 
-```
+```nix
     bridges = {
       br-lan = {
         name = "br-lan";
@@ -102,16 +98,16 @@ Below is the example configuration (unchanged) followed by detailed commentary a
     };
 ```
 
-  - Networks section:
-    - This is the place to attach configuration that will be translated to systemd-networkd units (or the project-specific network wiring). It uses `match.name` to select devices and `networkConfig` for arbitrary networkd snippets (like `Bridge = "br-lan"`, `VLAN = [...]`).
-    - The `type` field (seen as `static`/`unmanaged` in the example) controls whether the host assigns an address. `static` entries include `ip`, `gateway`, and `dns`. `unmanaged` means "bring the interface up but don't assign IPs". You can also use DHCP by setting `type = "dhcp"` in entries where that is supported by the module.
-  - VLAN -> Bridge wiring:
-    - The pattern used here is: create VLAN devices under the physical interface (`interfaces` → `vlans`), then add those VLAN devices into bridges (either by listing them in `bridges.[].interfaces` or by adding a `networkConfig` that sets `Bridge = ...`).
-  - VM interface patterns:
-    - Use glob `match.name` values such as `vm-lan-*` to automatically attach dynamically created VM tap devices to the appropriate host bridge.
+- Networks section:
+  - This is the place to attach configuration that will be translated to systemd-networkd units (or the project-specific network wiring). It uses `match.name` to select devices and `networkConfig` for arbitrary networkd snippets (like `Bridge = "br-lan"`, `VLAN = [...]`).
+  - The `type` field (seen as `static`/`unmanaged` in the example) controls whether the host assigns an address. `static` entries include `ip`, `gateway`, and `dns`. `unmanaged` means "bring the interface up but don't assign IPs". You can also use DHCP by setting `type = "dhcp"` in entries where that is supported by the module.
+- VLAN -> Bridge wiring:
+  - The pattern used here is: create VLAN devices under the physical interface (`interfaces` → `vlans`), then add those VLAN devices into bridges (either by listing them in `bridges.[].interfaces` or by adding a `networkConfig` that sets `Bridge = ...`).
+- VM interface patterns:
+  - Use glob `match.name` values such as `vm-lan-*` to automatically attach dynamically created VM tap devices to the appropriate host bridge.
 
-```
-    networks = {
+```nix
+  networks = {
       # assign VLAN devices to physical device (VLAN member setup)
       vlan-to-phys = {
         match = {
@@ -265,4 +261,30 @@ Below is the example configuration (unchanged) followed by detailed commentary a
       };
     };
   };
+```
+
+## Bridging gotchas
+
+By default the bridge module will emit a deterministic MAC for a bridge by
+deriving it from the first enslaved interface's configured MAC (if that
+interface has a `match.mac` configured). This ensures the bridge gets a
+stable hardware address across boots which can be useful if other parts of
+your configuration match by MAC.
+
+If you prefer to control the bridge MAC explicitly, set `mac = "..."` on
+the bridge declaration. Use a locally-administered unicast address (set the
+second-least-significant bit of the first octet to 1).
+
+```nix
+    bridges = {
+      br-lan = {
+        name = "br-lan";
+        mac = "02:0a:5a:00:a8:69";
+        interfaces = [
+                       "phys0"
+                       "vlan-lan"
+                     ];
+        stp = false;
+      };
+    };
 ```
