@@ -2,10 +2,8 @@
 
 let
   cfg = config.host.filesystem.swap;
-  swap_location =
-    if cfg.type == "file"
-    then cfg.file
-    else "/dev/"+cfg.partition;
+  # Do not compute a device path by concatenation at top-level because
+  # cfg.partition may be null during evaluation. Compute per-case below.
 in
   with lib;
 {
@@ -18,7 +16,7 @@ in
       };
       type = mkOption {
         default = null;
-        type = types.enum ["file" "partition"];
+        type = with types; nullOr (types.enum [ "file" "partition" ]);
         description = "Swap Type";
       };
       encrypt = mkOption {
@@ -33,7 +31,7 @@ in
       };
       partition = mkOption {
         default = null;
-        type = with types; str;
+        type = with types; nullOr types.str;
         example = "sda2";
         description = "Partition to be used for swap";
       };
@@ -62,9 +60,10 @@ in
       }];
     })
 
-    (mkIf ((cfg.enable) && (cfg.type == "partition")) {
+    # Partition-backed swap: only create a swapDevices entry if partition is set
+    (mkIf ((cfg.enable) && (cfg.type == "partition") && (cfg.partition != null)) {
       swapDevices = [{
-        device = swap_location;
+        device = "/dev/" + cfg.partition;
         randomEncryption.enable = false;
       }];
     })
@@ -83,9 +82,9 @@ in
               ${pkgs.coreutils}/bin/truncate -s 0 "$swapfile"
               ${pkgs.e2fsprogs}/bin/chattr +C "$swapfile"
               ${pkgs.btrfs-progs}/bin/btrfs property set "$swapfile" compression none
-              ${pkgs.coreutils}/bin/dd if=/dev/zero of="$swapfile bs=1M count=${cfg.size} status=progress
-              ${pkgs.coreutils}chmod 0600 ${swapfile}
-              ${pkgs.util-linux}/bin/mkswap ${swapfile}
+              ${pkgs.coreutils}/bin/dd if=/dev/zero of="$swapfile" bs=1M count=${toString cfg.size} status=progress
+              ${pkgs.coreutils}/bin/chmod 0600 "$swapfile"
+              ${pkgs.util-linux}/bin/mkswap "$swapfile"
           fi
         '';
       };
