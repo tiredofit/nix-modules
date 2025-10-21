@@ -78,35 +78,35 @@ in {
       let
         brName = if b.name == null then bName else b.name;
         netdevPath = "systemd/network/20-" + brName + ".netdev";
-        netdevLines = [
-          "[NetDev]"
-          ("Name=" + brName)
-          "Kind=bridge"
-          ""
-        ];
-        netdevLines2 = if (b ? mac && b.mac != null) then
-          netdevLines ++ [
-           "[Bridge]"
-           ("MACAddress=" + b.mac)
-          ]
-        else
-          netdevLines;
-        netdevText = lib.concatStringsSep "\n" netdevLines2;
+        netdevText = let
+          derivedMac = if b.interfaces != [] then
+            let ifn = builtins.head b.interfaces; in
+            if builtins.hasAttr ifn interfaces && interfaces.${ifn} ? match && interfaces.${ifn}.match ? mac then
+              interfaces.${ifn}.match.mac
+            else null
+          else null;
+
+          macToEmit = if b ? mac then b.mac else derivedMac;
+        in ''[NetDev]
+Name=${brName}
+Kind=bridge
+${if macToEmit != null then "MACAddress=${macToEmit}" else ""}
+'';
         ports = concatLists (map (ifn:
           let
-            resolved = resolveIface ifn;
-            path = "systemd/network/30-" + resolved + ".network";
-            text = lib.concatStringsSep "\n" ([
-              "[Match]"
-              ("Name=" + resolved)
+            iface = if interfaces ? ifn then interfaces.${ifn} else null;
+            matchAttrs = if iface != null && iface ? match && iface.match != null then mkMatchAttrs iface.match else { Name = ifn; };
+            matchLines = if matchAttrs == {} then [] else ["[Match]"] ++ map (k: k + "=" + matchAttrs.${k}) (attrNames matchAttrs);
+            path = "systemd/network/10-" + ifn + ".network";
+            text = lib.concatStringsSep "\n" (matchLines ++ [""] ++ [
+              "[Link]"
+              "RequiredForOnline=enslaved"
               ""
               "[Network]"
               ("Bridge=" + brName)
-              (if (b ? linkLocalAddressing && b.linkLocalAddressing) then "LinkLocalAddressing=yes" else "LinkLocalAddressing=no")
               ""
             ]);
           in [ { name = path; value = { text = text; }; } ]) (b.interfaces or [ ]));
-
       in [{
         name = netdevPath;
         value = { text = netdevText; };
