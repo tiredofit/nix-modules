@@ -24,9 +24,9 @@ in
     );
 
     networking = {
+      dhcpcd.enable = mkForce false;
       useNetworkd = mkDefault false;
       networkmanager.enable = mkDefault (cfg == "networkmanager" || cfg == "both");
-      networking.dhcpcd.enable = mkForce false;
     };
 
     services = {
