@@ -142,13 +142,13 @@ with lib;
 
     entries = mapAttrsToList (n: v: mkEntry n v) networks;
   in {
-    networking.useNetworkd = mkDefault
+    systemd.network.enable = mkDefault
       (if config.host.network.manager != null then
         config.host.network.manager == "systemd-networkd"
       else
         (builtins.length (builtins.attrNames networks) > 0));
 
-    systemd.network.networks = mkIf config.networking.useNetworkd
+    systemd.network.networks = mkIf config.systemd.network.enable
       (listToAttrs (map (e: { name = "30-" + e.name; value = e.value; }) entries));
   };
 }

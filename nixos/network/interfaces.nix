@@ -109,6 +109,6 @@ with lib;
         assertion = ((i ? mac && i.mac != null) || (i ? matchName && i.matchName != null) || (i ? match && i.match != null));
         message = "[host.network.interfaces." + name + "] Provide either 'mac', 'matchName' or 'match' to identify the interface";
       }]) (builtins.attrNames ifaces));
-      environment.etc = mkIf config.networking.useNetworkd (listToAttrs linkFiles);
+      environment.etc = mkIf config.systemd.network.enable (listToAttrs linkFiles);
   };
 }

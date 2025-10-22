@@ -113,5 +113,5 @@ ${if macToEmit != null then "MACAddress=${macToEmit}" else ""}
       }] ++ ports) bridges;
 
     envEtc = listToAttrs (concatLists bList);
-  in mkIf config.networking.useNetworkd { environment.etc = envEtc; };
+  in mkIf config.systemd.network.enable { environment.etc = envEtc; };
 }

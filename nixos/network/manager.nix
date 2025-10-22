@@ -25,7 +25,7 @@ in
 
     networking = {
       dhcpcd.enable = mkForce false;
-      useNetworkd = mkDefault false;
+      useNetworkd = mkForce false;
       networkmanager.enable = mkDefault (cfg == "networkmanager" || cfg == "both");
     };
 
