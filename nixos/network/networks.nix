@@ -142,9 +142,11 @@ with lib;
 
     entries = mapAttrsToList (n: v: mkEntry n v) networks;
   in {
-    systemd.network.enable = mkDefault
+    systemd.network.enable = mkForce
       (if config.host.network.manager != null then
-        config.host.network.manager == "systemd-networkd"
+        (config.host.network.manager == "systemd-networkd"
+         || config.host.network.manager == "networkd"
+         || config.host.network.manager == "both")
       else
         (builtins.length (builtins.attrNames networks) > 0));
 
