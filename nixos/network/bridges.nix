@@ -6,25 +6,41 @@ let
   bridges = config.host.network.bridges or { };
   interfaces = config.host.network.interfaces or { };
 
-  resolveIface = iface: let
-    entry = if interfaces ? iface then interfaces.${iface} else null;
-  in let
-    firstNonNull = xs: builtins.head (builtins.filter (x: x != null) xs);
-  matchCandidates = if entry != null && (entry ? match && entry.match != null) then [ entry.match.name entry.match.mac entry.match.permanentMac entry.match.path entry.match.originalName ] else [ ];
-  in (if matchCandidates == [] then iface else firstNonNull matchCandidates);
+  resolveIface = iface:
+    let entry = if interfaces ? iface then interfaces.${iface} else null;
+    in let
+      firstNonNull = xs: builtins.head (builtins.filter (x: x != null) xs);
+      matchCandidates =
+        if entry != null && (entry ? match && entry.match != null) then [
+          entry.match.name
+          entry.match.mac
+          entry.match.permanentMac
+          entry.match.path
+          entry.match.originalName
+        ] else
+          [ ];
+    in (if matchCandidates == [ ] then iface else firstNonNull matchCandidates);
 
-  mkMatchAttrs = m: lib.filterAttrs (k: v: v != null) {
-    Name = m.name;
-    MACAddress = m.mac;
-    PermanentMACAddress = m.permanentMac;
-    Path = m.path;
-    OriginalName = m.originalName;
-  };
+  mkMatchAttrs = m:
+    lib.filterAttrs (k: v: v != null) {
+      Name = m.name;
+      MACAddress = m.mac;
+      PermanentMACAddress = m.permanentMac;
+      Path = m.path;
+      OriginalName = m.originalName;
+    };
 
-  bridgeMatchFor = b: if (b ? match && b.match != null) then mkMatchAttrs b.match else if ((b ? matchName && b.matchName != null) || (b ? mac && b.mac != null)) then lib.filterAttrs (k: v: v != null) {
-    Name = if (b ? matchName) then b.matchName else null;
-    MACAddress = if (b ? mac) then b.mac else null;
-  } else null;
+  bridgeMatchFor = b:
+    if (b ? match && b.match != null) then
+      mkMatchAttrs b.match
+    else if ((b ? matchName && b.matchName != null)
+      || (b ? mac && b.mac != null)) then
+      lib.filterAttrs (k: v: v != null) {
+        Name = if (b ? matchName) then b.matchName else null;
+        MACAddress = if (b ? mac) then b.mac else null;
+      }
+    else
+      null;
 
 in {
   options = {
@@ -34,7 +50,8 @@ in {
           name = mkOption {
             type = types.nullOr types.str;
             default = null;
-            description = "The name of the bridge. If null, the attribute name is used.";
+            description =
+              "The name of the bridge. If null, the attribute name is used.";
             example = "br0";
           };
           interfaces = mkOption {
@@ -46,11 +63,36 @@ in {
           match = mkOption {
             type = types.nullOr (types.submodule {
               options = {
-                name = mkOption { type = types.nullOr types.str; default = null; };
-                mac = mkOption { type = types.nullOr types.str; default = null; };
-                permanentMac = mkOption { type = types.nullOr types.str; default = null; };
-                path = mkOption { type = types.nullOr types.str; default = null; };
-                originalName = mkOption { type = types.nullOr types.str; default = null; };
+                name = mkOption {
+                  type = types.nullOr types.str;
+                  default = null;
+                  description = "Match interface by name";
+                  example = "br0";
+                };
+                mac = mkOption {
+                  type = types.nullOr types.str;
+                  default = null;
+                  description = "Match interface by MAC address";
+                  example = "00:01:02:ab:cd:ef";
+                };
+                permanentMac = mkOption {
+                  type = types.nullOr types.str;
+                  default = null;
+                  description = "Match interface by permanent MAC address";
+                  example = "00:01:02:ab:cd:ef";
+                };
+                path = mkOption {
+                  type = types.nullOr types.str;
+                  default = null;
+                  description = "Match interface by sysfs path";
+                  example = "/sys/devices/pci0000:00/0000:00:1f.6/net/enp0s31f6";
+                };
+                originalName = mkOption {
+                  type = types.nullOr types.str;
+                  default = null;
+                  desciption = "Match interface by original name";
+                  example = "eth0";
+                };
               };
             });
             default = null;
@@ -79,26 +121,39 @@ in {
         brName = if b.name == null then bName else b.name;
         netdevPath = "systemd/network/20-" + brName + ".netdev";
         netdevText = let
-          derivedMac = if b.interfaces != [] then
-            let ifn = builtins.head b.interfaces; in
-            if builtins.hasAttr ifn interfaces && interfaces.${ifn} ? match && interfaces.${ifn}.match ? mac then
+          derivedMac = if b.interfaces != [ ] then
+            let ifn = builtins.head b.interfaces;
+            in if builtins.hasAttr ifn interfaces && interfaces.${ifn} ? match
+            && interfaces.${ifn}.match ? mac then
               interfaces.${ifn}.match.mac
-            else null
-          else null;
+            else
+              null
+          else
+            null;
 
           macToEmit = if b ? mac then b.mac else derivedMac;
-        in ''[NetDev]
-Name=${brName}
-Kind=bridge
-${if macToEmit != null then "MACAddress=${macToEmit}" else ""}
-'';
+        in ''
+          [NetDev]
+          Name=${brName}
+          Kind=bridge
+          ${if macToEmit != null then "MACAddress=${macToEmit}" else ""}
+        '';
         ports = concatLists (map (ifn:
           let
             iface = if interfaces ? ifn then interfaces.${ifn} else null;
-            matchAttrs = if iface != null && iface ? match && iface.match != null then mkMatchAttrs iface.match else { Name = ifn; };
-            matchLines = if matchAttrs == {} then [] else ["[Match]"] ++ map (k: k + "=" + matchAttrs.${k}) (attrNames matchAttrs);
+            matchAttrs =
+              if iface != null && iface ? match && iface.match != null then
+                mkMatchAttrs iface.match
+              else {
+                Name = ifn;
+              };
+            matchLines = if matchAttrs == { } then
+              [ ]
+            else
+              [ "[Match]" ]
+              ++ map (k: k + "=" + matchAttrs.${k}) (attrNames matchAttrs);
             path = "systemd/network/10-" + ifn + ".network";
-            text = lib.concatStringsSep "\n" (matchLines ++ [""] ++ [
+            text = lib.concatStringsSep "\n" (matchLines ++ [ "" ] ++ [
               "[Link]"
               "RequiredForOnline=enslaved"
               ""
@@ -106,7 +161,10 @@ ${if macToEmit != null then "MACAddress=${macToEmit}" else ""}
               ("Bridge=" + brName)
               ""
             ]);
-          in [ { name = path; value = { text = text; }; } ]) (b.interfaces or [ ]));
+          in [{
+            name = path;
+            value = { text = text; };
+          }]) (b.interfaces or [ ]));
       in [{
         name = netdevPath;
         value = { text = netdevText; };

@@ -10,28 +10,54 @@ with lib;
           match = mkOption {
             type = types.nullOr (types.submodule {
               options = {
-                name = mkOption { type = types.nullOr types.str; default = null; };
-                mac = mkOption { type = types.nullOr types.str; default = null; };
-                permanentMac = mkOption { type = types.nullOr types.str; default = null; };
-                path = mkOption { type = types.nullOr types.str; default = null; };
-                originalName = mkOption { type = types.nullOr types.str; default = null; };
+                name = mkOption {
+                  type = types.nullOr types.str;
+                  default = null;
+                  description = "Match interface by name";
+                  example = "enp3s0f0";
+                };
+                mac = mkOption {
+                  type = types.nullOr types.str;
+                  default = null;
+                  description = "Match interface by MAC address";
+                  example = "00:01:02:ab:cd:ef";
+                };
+                permanentMac = mkOption {
+                  type = types.nullOr types.str;
+                  default = null;
+                  description = "Match interface by permanent MAC address";
+                  example = "00:01:02:ab:cd:ef";
+                };
+                path = mkOption {
+                  type = types.nullOr types.str;
+                  default = null;
+                  description = "Match interface by sysfs path";
+                  example = "/sys/devices/pci0000:00/0000:00:1f.6/net/enp0s31f6";
+                };
+                originalName = mkOption {
+                  type = types.nullOr types.str;
+                  default = null;
+                  description = "Match interface by original name";
+                  example = "eth0";
+                };
               };
             });
             default = null;
-            description = "Optional structured match config for this network (maps to systemd [Match] keys).";
+            description =
+              "Optional structured match config for this network (maps to systemd [Match] keys).";
           };
           networkConfig = mkOption {
             type = types.nullOr types.attrs;
             default = null;
-            description = "Optional extra [Network] keys to merge into the generated network unit.";
-            example = {
-              Bridge = "br-lan";
-            };
+            description =
+              "Optional extra [Network] keys to merge into the generated network unit.";
+            example = { Bridge = "br-lan"; };
           };
           type = mkOption {
             type = types.nullOr (types.enum [ "static" "dynamic" "unmanaged" ]);
             default = null;
-            description = "Addressing type for this network. - Unmanaged or null means no addressing configured.";
+            description =
+              "Addressing type for this network. - Unmanaged or null means no addressing configured.";
             example = "static";
           };
           ip = mkOption {
@@ -85,55 +111,82 @@ with lib;
       let
         baseNetworkConfig = (if net.domains != null then {
           Domains = concatStringsSep " " net.domains;
-        } else { }) // (if net.networkConfig != null then net.networkConfig else { });
+        } else
+          { })
+          // (if net.networkConfig != null then net.networkConfig else { });
         networkConfig = baseNetworkConfig // (if net.type == "dynamic" then {
           DHCP = "yes";
         } else if net.type == "static" then {
           DNS = if net.dns != null then net.dns else null;
-        } else { });
-        networkConfigFiltered = let nc = filterAttrs (k: v: v != null) networkConfig; in
-          if builtins.length (builtins.attrNames nc) == 0 then null else nc;
+        } else
+          { });
+        networkConfigFiltered =
+          let nc = filterAttrs (k: v: v != null) networkConfig;
+          in if builtins.length (builtins.attrNames nc) == 0 then null else nc;
         value = let
           explicitMatch = if net.match != null then net.match else null;
           bridgeMac = if explicitMatch == null || explicitMatch.mac == null then
             if bridges ? name then
-              let b = bridges.${name};
-                firstIf = if b.interfaces != null && b.interfaces != [] then builtins.head b.interfaces else null;
-              in if firstIf != null && interfaces ? firstIf && interfaces.${firstIf} ? match && interfaces.${firstIf}.match != null && interfaces.${firstIf}.match.mac != null then
+              let
+                b = bridges.${name};
+                firstIf = if b.interfaces != null && b.interfaces != [ ] then
+                  builtins.head b.interfaces
+                else
+                  null;
+              in if firstIf != null && interfaces ? firstIf
+              && interfaces.${firstIf} ? match && interfaces.${firstIf}.match
+              != null && interfaces.${firstIf}.match.mac != null then
                 interfaces.${firstIf}.match.mac
-              else null
-            else null
-          else null;
+              else
+                null
+            else
+              null
+          else
+            null;
 
           m = if explicitMatch != null then explicitMatch else null;
 
-          matchAttrs = if m != null then filterAttrs (k: v: v != null) {
-            Name = m.name;
-            MACAddress = m.mac;
-            PermanentMACAddress = m.permanentMac;
-            Path = m.path;
-            OriginalName = m.originalName;
-          }
-          else if bridgeMac != null then { MACAddress = bridgeMac; }
-          else { Name = name; };
+          matchAttrs = if m != null then
+            filterAttrs (k: v: v != null) {
+              Name = m.name;
+              MACAddress = m.mac;
+              PermanentMACAddress = m.permanentMac;
+              Path = m.path;
+              OriginalName = m.originalName;
+            }
+          else if bridgeMac != null then {
+            MACAddress = bridgeMac;
+          } else {
+            Name = name;
+          };
 
         in let
-          is32 = if net.ip != null then (builtins.match ".*/32$" net.ip) != null else false;
-          gwOnLink = if net.gatewayOnLink != null then net.gatewayOnLink else is32;
+          is32 = if net.ip != null then
+            (builtins.match ".*/32$" net.ip) != null
+          else
+            false;
+          gwOnLink =
+            if net.gatewayOnLink != null then net.gatewayOnLink else is32;
         in {
           matchConfig = matchAttrs;
           networkConfig = networkConfigFiltered;
           routes = if net.type == "static" && net.gateway != null then [{
             Gateway = net.gateway;
             GatewayOnLink = if gwOnLink then true else false;
-          }] else [ ];
-          addresses = if net.type == "static" && net.ip != null then
-            [ { Address = net.ip; } ]
-          else [ ];
+          }] else
+            [ ];
+          addresses = if net.type == "static" && net.ip != null then [{
+            Address = net.ip;
+          }] else
+            [ ];
           dhcpV4Config = if net.dhcpClientIdentifier != null then {
             ClientIdentifier = net.dhcpClientIdentifier;
-          } else { };
-          linkConfig = if net.type == "static" then { RequiredForOnline = "routable"; } else { };
+          } else
+            { };
+          linkConfig = if net.type == "static" then {
+            RequiredForOnline = "routable";
+          } else
+            { };
         };
       in {
         name = name;
@@ -145,12 +198,15 @@ with lib;
     systemd.network.enable = mkForce
       (if config.host.network.manager != null then
         (config.host.network.manager == "systemd-networkd"
-         || config.host.network.manager == "networkd"
-         || config.host.network.manager == "both")
+          || config.host.network.manager == "networkd"
+          || config.host.network.manager == "both")
       else
         (builtins.length (builtins.attrNames networks) > 0));
 
-    systemd.network.networks = mkIf config.systemd.network.enable
-      (listToAttrs (map (e: { name = "30-" + e.name; value = e.value; }) entries));
+    systemd.network.networks = mkIf config.systemd.network.enable (listToAttrs
+      (map (e: {
+        name = "30-" + e.name;
+        value = e.value;
+      }) entries));
   };
 }
