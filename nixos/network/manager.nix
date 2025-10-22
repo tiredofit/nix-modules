@@ -7,7 +7,7 @@ in
 {
   options = {
     host.network.manager = mkOption {
-      type = types.enum ["networkmanager" "networkd" "systemd-networkd"];
+      type = types.enum ["networkmanager" "networkd" "systemd-networkd" "both"];
       default = null;
       description = "Network Manager";
     };
@@ -17,15 +17,15 @@ in
     host.filesystem.impermanence.directories = mkIf (config.host.filesystem.impermanence.enable) (
       [
       ] ++
-      (if cfg == "networkmanager" then [
+      (if (cfg == "networkmanager" || cfg == "both") then [
         "/etc/NetworkManager"
         "/var/lib/NetworkManager"
       ] else [])
     );
 
     networking = {
-      useNetworkd = mkDefault (cfg == "systemd-networkd");
-      networkmanager.enable = mkDefault (cfg == "networkmanager");
+      useNetworkd = mkDefault (cfg == "systemd-networkd" || cfg == "both");
+      networkmanager.enable = mkDefault (cfg == "networkmanager" || cfg == "both");
     };
 
     services = {
@@ -35,12 +35,11 @@ in
     };
 
     systemd = {
-      network.wait-online.enable =  mkIf (cfg == "systemd-networkd") false;
       services = {
-        systemd-networkd-wait-online.enable = if cfg == "systemd-networkd" then pkgs.lib.mkForce false else mkDefault (cfg == "systemd-networkd");
-        systemd-networkd.stopIfChanged = if cfg == "systemd-networkd" then pkgs.lib.mkForce false else false;
+        systemd-networkd-wait-online.enable = if (cfg == "systemd-networkd" || cfg == "both") then pkgs.lib.mkForce false else mkDefault (cfg == "systemd-networkd" || cfg == "both");
+        systemd-networkd.stopIfChanged = if (cfg == "systemd-networkd" || cfg == "both") then pkgs.lib.mkForce false else false;
         systemd-resolved.stopIfChanged = false;
-        NetworkManager-wait-online.enable = mkIf (cfg == "networkmanager") false;
+        NetworkManager-wait-online.enable = mkIf (cfg == "networkmanager" || cfg == "both") false;
       };
     };
   };
