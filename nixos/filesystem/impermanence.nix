@@ -54,18 +54,16 @@ in
       (lib.mkIf ((cfg_impermanence.enable) && (!cfg_encrypt.enable) && (config.host.filesystem.btrfs.enable)) {
         postDeviceCommands = pkgs.lib.mkBefore ''
           mkdir -p /mnt
+          btrfs device scan --all-devices
 
-          # Find a btrfs device that contains the configured root subvolume.
-          # Prefer blkid-discovered btrfs devices for faster and more accurate filtering.
           find_btrfs_device() {
             root_subvol='${cfg_impermanence.root-subvol}'
-
             # iterate blkid results without using a pipe/while (avoid subshells so return works)
-            for d in $(blkid -o device -t TYPE=btrfs 2>/dev/null); do
-              [ -e "$d" ] || continue
+            for d in $(blkid -o value -s UUID -t TYPE=btrfs 2>/dev/null); do
+              [ -e /dev/disk/by-uuid/"$d" ] || continue
               echo "[impermanence] checking $d" >&2
               _tmp=$(mktemp -d) || continue
-              if mount -o ro "$d" "$_tmp" 2>/dev/null; then
+              if mount -t btrfs -o ro UUID=$d "$_tmp" 2>/dev/null; then
                 if btrfs subvolume list "$_tmp" 2>/dev/null | awk '{print $9}' | grep -qx "$root_subvol"; then
                   umount "$_tmp" 2>/dev/null || true
                   rmdir "$_tmp" 2>/dev/null || true
@@ -76,7 +74,6 @@ in
               fi
               rmdir "$_tmp" 2>/dev/null || true
             done
-
             return 1
           }
 
@@ -86,17 +83,16 @@ in
             echo "[impermanence] Could not find btrfs device containing subvolume ${cfg_impermanence.root-subvol}" >&2
             exit 1
           fi
-
           echo "[impermanence] using $btrfs_root_device" >&2
-          mount -o subvol=/ "$btrfs_root_device" /mnt
+          mount -o subvol=/ UUID=$btrfs_root_device /mnt
           btrfs subvolume list -o /mnt/${cfg_impermanence.root-subvol} | cut -f9 -d' ' |
           while read subvolume; do
-              echo "Deleting /$subvolume subvolume"
+              echo "[impermanence] Deleting /$subvolume subvolume"
               btrfs subvolume delete "/mnt/$subvolume"
           done &&
-          echo "Deleting /${cfg_impermanence.root-subvol} subvolume" &&
+          echo "[impermanence] Deleting /${cfg_impermanence.root-subvol} subvolume" &&
           btrfs subvolume delete /mnt/${cfg_impermanence.root-subvol}
-          echo "Restoring blank /${cfg_impermanence.root-subvol} subvolume"
+          echo "[impermanence] Restoring blank /${cfg_impermanence.root-subvol} subvolume"
           btrfs subvolume snapshot /mnt/${cfg_impermanence.blank-root-subvol} /mnt/${cfg_impermanence.root-subvol}
           mkdir -p /mnt/${cfg_impermanence.root-subvol}/mnt
           umount /mnt
@@ -200,12 +196,12 @@ in
               mount -o subvol=/ "$BTRFS_DEV" /mnt
               btrfs subvolume list -o /mnt/${cfg_impermanence.root-subvol} | cut -f9 -d' ' |
               while read subvolume; do
-                echo "Deleting /$subvolume subvolume"
+                echo "[impermanence] Deleting /$subvolume subvolume"
                 btrfs subvolume delete "/mnt/$subvolume"
               done &&
-              echo "Deleting /${cfg_impermanence.root-subvol} subvolume" &&
+              echo "[impermanence] Deleting /${cfg_impermanence.root-subvol} subvolume" &&
               btrfs subvolume delete /mnt/${cfg_impermanence.root-subvol}
-              echo "Restoring blank /${cfg_impermanence.root-subvol} subvolume"
+              echo "[impermanence] Restoring blank /${cfg_impermanence.root-subvol} subvolume"
               btrfs subvolume snapshot /mnt/${cfg_impermanence.blank-root-subvol} /mnt/${cfg_impermanence.root-subvol}
               mkdir -p /mnt/${cfg_impermanence.root-subvol}/mnt
               umount /mnt
