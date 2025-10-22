@@ -24,8 +24,9 @@ in
     );
 
     networking = {
-      useNetworkd = mkDefault (cfg == "systemd-networkd" || cfg == "both");
+      useNetworkd = mkDefault false;
       networkmanager.enable = mkDefault (cfg == "networkmanager" || cfg == "both");
+      networking.dhcpcd.enable = mkForce false;
     };
 
     services = {
@@ -35,6 +36,7 @@ in
     };
 
     systemd = {
+      network.enable = mkDefault (cfg == "systemd-networkd" || cfg == "both");
       services = {
         systemd-networkd-wait-online.enable = if (cfg == "systemd-networkd" || cfg == "both") then pkgs.lib.mkForce false else mkDefault (cfg == "systemd-networkd" || cfg == "both");
         systemd-networkd.stopIfChanged = if (cfg == "systemd-networkd" || cfg == "both") then pkgs.lib.mkForce false else false;
