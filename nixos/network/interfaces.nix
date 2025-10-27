@@ -58,24 +58,10 @@ with lib;
             description = "Support 169.254.0.0/16 communication.";
           };
           vlans = mkOption {
-            type = types.nullOr (types.attrsOf (types.submodule {
-              options = {
-                id = mkOption {
-                  type = types.int;
-                  default = 0;
-                  description = "VLAN ID";
-                  example = "100";
-                };
-                name = mkOption {
-                  type = types.nullOr types.str;
-                  default = null;
-                  description = "Optional explicit name for the VLAN device";
-                  example = "vlan-lan";
-                };
-              };
-            }));
+            type = types.nullOr (types.listOf types.str);
             default = null;
-            description = "Optional VLAN topology attached to this interface.";
+            description = "Optional list of VLAN device names attached to this interface.";
+            example = [ "vlan100" "vlan200" ];
           };
         };
       });
