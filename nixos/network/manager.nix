@@ -1,13 +1,12 @@
 {config, lib, pkgs, ...}:
 let
-  rawCfg = config.host.network.manager;
-  cfg = if rawCfg == "networkd" then "systemd-networkd" else rawCfg;
+  cfg = config.host.network.manager;
 in
   with lib;
 {
   options = {
     host.network.manager = mkOption {
-      type = types.enum ["networkmanager" "networkd" "systemd-networkd" "both"];
+      type = types.enum ["networkmanager" "systemd-networkd" "both"];
       default = null;
       description = "Network Manager";
     };
@@ -26,7 +25,14 @@ in
     networking = {
       dhcpcd.enable = mkForce false;
       useNetworkd = mkForce false;
-      networkmanager.enable = mkDefault (cfg == "networkmanager" || cfg == "both");
+      networkmanager = {
+        enable = mkForce (cfg == "networkmanager" || cfg == "both");
+        wifi.backend = config.host.hardware.wireless.backend;
+      };
+      wireless = mkIf (cfg == "networkmanager" || cfg == "both") {
+        enable = mkForce false;
+        #iwd.enable = mkForce false;
+      };
     };
 
     services = {
