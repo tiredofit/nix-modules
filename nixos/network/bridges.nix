@@ -50,8 +50,7 @@ in {
           name = mkOption {
             type = types.nullOr types.str;
             default = null;
-            description =
-              "The name of the bridge. If null, the attribute name is used.";
+            description =  "The name of the bridge. If null, the attribute name is used.";
             example = "br0";
           };
           interfaces = mkOption {
@@ -66,37 +65,43 @@ in {
                 name = mkOption {
                   type = types.nullOr types.str;
                   default = null;
-                  description = "Match interface by name";
+                  description = "Match interface by name.";
                   example = "br0";
                 };
                 mac = mkOption {
                   type = types.nullOr types.str;
                   default = null;
-                  description = "Match interface by MAC address";
+                  description = "Match interface by MAC address.";
                   example = "00:01:02:ab:cd:ef";
                 };
                 permanentMac = mkOption {
                   type = types.nullOr types.str;
                   default = null;
-                  description = "Match interface by permanent MAC address";
+                  description = "Match interface by permanent MAC address.";
                   example = "00:01:02:ab:cd:ef";
                 };
                 path = mkOption {
                   type = types.nullOr types.str;
                   default = null;
-                  description = "Match interface by sysfs path";
+                  description = "Match interface by sysfs path.";
                   example = "/sys/devices/pci0000:00/0000:00:1f.6/net/enp0s31f6";
                 };
                 originalName = mkOption {
                   type = types.nullOr types.str;
                   default = null;
-                  desciption = "Match interface by original name";
+                  desciption = "Match interface by original name.";
                   example = "eth0";
                 };
               };
             });
             default = null;
-            description = "Optional structured match for the bridge itself (maps to systemd [Match] on attachment).";
+            description = "Optional structured match for the bridge itself";
+          };
+          mac = mkOption {
+            type = types.nullOr types.str;
+            default = null;
+            description = "Optional explicit MAC address to assign to the bridge.";
+            example = "00:11:22:aa:bb:cc";
           };
           stp = mkOption {
             type = types.bool;
@@ -106,7 +111,7 @@ in {
           linkLocalAddressing = mkOption {
             type = types.bool;
             default = false;
-            description = "Whether to enable link-local (169.254/16) addressing on the bridge's attachment network. Defaults to false.";
+            description = "Whether to enable link-local (169.254/16) addressing on the bridge's attachment network.";
           };
         };
       });
@@ -121,17 +126,7 @@ in {
         brName = if b.name == null then bName else b.name;
         netdevPath = "systemd/network/20-" + brName + ".netdev";
         netdevText = let
-          derivedMac = if b.interfaces != [ ] then
-            let ifn = builtins.head b.interfaces;
-            in if builtins.hasAttr ifn interfaces && interfaces.${ifn} ? match
-            && interfaces.${ifn}.match ? mac then
-              interfaces.${ifn}.match.mac
-            else
-              null
-          else
-            null;
-
-          macToEmit = if b ? mac then b.mac else derivedMac;
+          macToEmit = if b ? mac then b.mac else null;
         in ''
           [NetDev]
           Name=${brName}
