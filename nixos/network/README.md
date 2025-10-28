@@ -177,91 +177,304 @@ If you prefer to control the bridge MAC explicitly, set `mac = "..."` on the bri
 
 ## Alternate Bridge and VLAN configuration
 
-```
-  network = {
-    interfaces = {
-      enp0 = {
-        match = {
-          mac = "01:02:03:04:05:06";
-        };
-      };
-      veth0 = {
-        match = {
-          mac = "07:08:09:10:1A:1B";
-        };
-        vlans = [
-          "vlan100"
-          "vlan200"
-        ];
-      };
-      br-vlan = {
-        match = {
-          name = "br-vlan";
-        };
-        vlans = [
-          "vlan123" "vlan456" ];
-      };
-    };
+### Example 1
 
-    # Define a bridge to attach the VLAN 123 and 456 device. The bridge will be created as `br-vlan` and will enslave `veth0.123` and veth0.456.
-    bridges = {
-      br-vlan = {
-        interfaces = [ "veth0" ];
-        vlan = {
-          filtering = true;
-          defaultPVID = "none";
-          portVLANs = {
-            veth0 = {
-              vlans = [ 123 456 ];
-            };
+- Create bridges for physical NIC, map br-quad1-4 to locally run VM
+- Locally run VM tags quad2 traffic to run VLANs
+- Create Bridges to seperate VLANs and make available for containers VMs
+
+```
+    network = {
+      hostname = "vmserver";
+      manager = "both";
+      interfaces = {
+        onboard = {
+          match = {
+            mac = "00:01:02:03:04:05";
+          };
+        };
+        quad1 = {
+          match = {
+            mac = "00:E0:EO:EO:EO:01";
+          };
+        };
+        quad2 = {
+          match = {
+            mac = "00:E0:EO:EO:EO:02";
+          };
+        };
+        quad3 = {
+          match = {
+            mac = "00:E0:EO:EO:EO:03";
+          };
+        };
+        quad4 = {
+          match = {
+            mac = "00:E0:EO:EO:EO:04";
+          };
+        };
+        br-quad2 = { # Create VLAN sub-interfaces on br-quad2
+          match = {
+            name = "br-quad2";
+          };
+          vlans = [
+            "vlan100"
+            "vlan200"
+            "vlan300"
+            #"vlan400"
+            "vlan500"
+          ];
+        };
+      };
+      vlans = {
+        vlan100 = {
+          id = 100;
+        };
+        vlan200 = {
+          id = 200;
+        };
+        vlan300 = {
+          id = 300;
+        };
+        #vlan400 = {
+        #  id = 400;
+        #};
+        vlan500 = {
+          id = 500;
+        };
+      };
+      bridges = {
+        br-onboard = {
+          interfaces = [ "onboard" ];
+          match = {
+            name = "onboard";
+          };
+        };
+        br-quad1 = {
+          interfaces = [ "quad1" ];
+          match = {
+            name = "quad1";
+          };
+        };
+        br-quad2 = {
+          interfaces = [ "quad2" ];
+          match = {
+            name = "quad2";
+          };
+        };
+        br-quad3 = {
+          interfaces = [ "quad3" ];
+          match = {
+            name = "quad3";
+          };
+        };
+        br-quad4 = {
+          interfaces = [ "quad4" ];
+          match = {
+            name = "quad4";
+          };
+        };
+        br-vlan100= { # VLAN-specific bridges - Built on VLAN interfaces on br-quad2
+          interfaces = [ "vlan100" ];
+        };
+        br-vlan200 = {
+          interfaces = [ "vlan200" ];
+        };
+        br-vlan300 = {
+          interfaces = [ "vlan300" ];
+        };
+        #br-vlan400 = {
+        #  interfaces = [ "vlan400" ];
+        #};
+        br-vlan500 = {
+          interfaces = [ "vlan500" ];
+        };
+      };
+      networks = {
+        onboard = {
+          type = "dynamic";
+          match = {
+            name = "br-onboard";
+          };
+        };
+        quad1 = {
+          type = "unmanaged";
+          match = {
+            name = "br-quad1";
+          };
+        };
+        quad2 = {
+          type = "unmanaged";
+          match = {
+            name = "br-quad2";
+          };
+        };
+        quad3 = {
+          type = "unmanaged";
+          match = {
+            name = "br-quad3";
+          };
+        };
+        quad4 = {
+          type = "unmanaged";
+          match = {
+            name = "br-quad4";
+          };
+        };
+        vlan100 = {
+          type = "dynamic";
+          match = {
+            name = "br-vlan100";
+          };
+        };
+        vlan200 = {
+          type = "dynamic";
+          match = {
+            name = "br-vlan200";
+          };
+        };
+        vlan300 = {
+          type = "dynamic";
+          match = {
+            name = "br-vlan300";
+          };
+        };
+        #vlan400 = {
+        #  type = "dynamic";
+        #  match = {
+        #    name = "br-vlan400";
+        #  };
+        #};
+        vlan500 = {
+          type = "dynamic";
+          match = {
+            name = "br-vlan500";
+          };
+        };
+      };
+```
+
+#### Virtual Machine - Same Host
+
+```
+    network = {
+      firewall.fail2ban.enable = false;
+      hostname = "vm-servedonserver";
+      interfaces = {
+        enp0 = {
+          match = {
+            mac = "02:01:01:02:DD";
+          };
+        };
+        veth0 = { # Connected to server br-quad2
+          match = {
+            mac = "02:02:02:02:02";
+          };
+        };
+        vveth = { # Connected to server br-vlan200
+          match = {
+            mac = "00:02:03:04:60";
+          };
+        };
+        br-veth0 = { # Create VLAN sub-interfaces on br-veth0 (receives tagged traffic from Nucleus)
+          match = {
+            name = "br-veth0";
+          };
+          vlans = [
+            "vlan200"
+            "vlan300"
+            "vlan500"
+          ];
+        };
+      };
+      vlans = {
+        vlan200 = {
+          id = 200;
+        };
+        vlan300 = {
+          id = 300;
+        };
+        vlan500 = {
+          id = 500;
+        };
+      };
+      bridges = {
+        br-veth0 = { # Bridge veth0 to receive all tagged VLAN traffic from Nucleus br-quad2
+          interfaces = [ "veth0" ];
+        };
+        br-vlan200 = { # Then create VLAN-specific bridges for containers/VMs
+          interfaces = [ "vlan200" ];
+        };
+        br-vlan300 = {
+          interfaces = [ "vlan300" ];
+        };
+        br-vlan500 = {
+          interfaces = [ "vlan500" ];
+        };
+      };
+      networks = {
+        enp0 = {
+          type = "dynamic";
+        };
+        veth0-bridge = { # veth0 is bridged (br-veth0) - no IP on veth0 itself, br-veth0 is unmanaged - just passes VLAN traffic through
+          type = "unmanaged";
+          match = {
+            name = "br-veth0";
+          };
+        };
+        vveth = { # Direct access to VLAN 200 via vveth
+          type = "dynamic";
+        };
+        vlan200 = {
+          type = "dynamic"; # Host gets IP on VLAN 200
+          match = {
+            name = "br-vlan60";
+          };
+        };
+        vlan300 = {
+          type = "dynamic"; # host gets IP on VLAN 300
+          match = {
+            name = "br-vlan300";
+          };
+        };
+        vlan500 = {
+          type = "dynamic";  # host gets IP on VLAN 500
+          match = {
+            name = "br-vlan500";
           };
         };
       };
     };
-    vlans = {
-      vlan100 = {
-        id = 100;
+
+### Example 2
+
+- Subinterface for tagged VLAN
+
+```
+   network = {
+      interfaces = {
+        veth0 = {
+          match = {
+            mac = "03:03:03:03:03:03";
+          };
+          vlans = [
+            "vlan60"
+          ];
+        };
       };
-      vlan123 = {
-        id = 123;
+      vlans = {
+        vlan60 = {
+          id = 60;
+        };
       };
-      vlan200 = {
-        id = 200;
-      };
-      vlan456 = {
-        id = 456;
-      };
-    };
-    networks = {
-      enp0 = {
-        type = "dynamic";
-      };
-      # VLAN 123 on bridge - Static
-      "br-vlan.123" = {
-        match.name = "vlan123";
-        type = "static";
-        ip = "192.168.123.123/24";
-        gateway = "192.168.123.1";
-        dns = [ "192.168.123.1" ];
-      };
-      # VLAN 456 on bridge - DHCP
-      "br-vlan.456" = {
-        match.name = "vlan456";
-        type = "dynamic";
-      };
-      veth0 = {
-        type = "unmanaged";
-      };
-      "veth0.100" = {
-        match.name = "vlan100";
-        type = "dynamic";
-      };
-      "veth0.200" = {
-        match.name = "vlan60";
-        type = "static";
-        ip = "192.168.200.200/24";
-        gateway = "192.168.200.1";
-        dns = [ "192.168.200.1" ];
+      networks = {
+        veth0 = {
+          type = "unmanaged";
+        };
+        "veth0.60" = {
+          match.name = "vlan60";
+          type = "dynamic";
+        };
       };
     };
-  };
+```
