@@ -17,7 +17,7 @@ in
       };
       service.docker_container_manager = {
         enable = mkOption {
-          default = false;
+          default = (config.host.feature.virtualization.docker.enable) && (config.host.feature.virtualization.docker.compose.enable);
           type = with types; bool;
           description = "Start and stop containers on bootup / shutdown";
         };
@@ -38,7 +38,7 @@ in
         if command -v awk >/dev/null 2>&1; then
           awk_bin="$(command -v awk)"
         elif [ -x "${pkgs.gawk}/bin/awk" ]; then
-          awk_bin="$${pkgs.gawk}/bin/awk"
+          awk_bin="${pkgs.gawk}/bin/awk"
         else
           echo "Error: 'awk' command not found. Please install 'awk'." >&2
           exit 1
@@ -316,7 +316,10 @@ in
           shutdown)
             if [ "''${2-}" = "nobackup" ] ; then shutdown_str=" NOT " ; fi
             echo "**** [container-tool] Stopping all compose stacks and''${shutdown_str:-}backing up databases if a db-backup container exists"
+            ct_stop_app_containers
             ct_stop_stack
+            ct_stop_sys_containers
+            if [ ! -f "/var/lib/docker/.noprune" ]; then $docker_bin system prune -a -f; fi
           ;;
           stop)
             echo "**** [container-tool] Stopping all containers"
@@ -366,20 +369,25 @@ in
         };
 
         docker-container-manager-shutdown = {
-          enable = true;
           description = "Stop docker containers on shutdown";
-          before = [ "docker.service" ];
+          wantedBy = [ "docker.service" ];
+          after = [ "docker.service" ];
+          bindsTo = [ "docker.service" ];
+          before = [ "shutdown.target" ];
           serviceConfig = {
             Type = "oneshot";
-            ExecCondition = "/usr/bin/test -e /run/systemd/shutdown/ready";
-            ExecStart = [
-              "/bin/sh -c 'echo \"Executing system shutdown container management tasks\"'"
-              "/run/current-system/sw/bin/container-tool shutdown"
-            ];
-            RemainAfterExit = "no";
-            TimeoutSec = 900;
+            RemainAfterExit = "yes";
+            ExecStart = "${pkgs.coreutils}/bin/true";
+            ExecStop = pkgs.writeShellScript "container-shutdown-check" ''
+              if systemctl list-jobs | grep -q 'shutdown.target\|reboot.target\|halt.target\|poweroff.target'; then
+                echo "Executing system shutdown container management tasks"
+                /run/current-system/sw/bin/container-tool shutdown
+              else
+                echo "Skipping container shutdown - not a system shutdown/reboot"
+              fi
+            '';
+            TimeoutStopSec = 900;
           };
-          wantedBy = [ "shutdown.target" ];
         };
       };
     };
