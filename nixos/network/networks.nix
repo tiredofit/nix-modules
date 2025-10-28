@@ -194,6 +194,15 @@ with lib;
       };
 
     entries = mapAttrsToList (n: v: mkEntry n v) networks;
+
+    # Filter out networks that are handled by bridges.nix
+    bridgeNames = builtins.map (bName:
+      let b = bridges.${bName};
+      in if b.name != null then b.name else bName
+    ) (builtins.attrNames bridges);
+
+    filteredEntries = builtins.filter (e: !(builtins.elem e.name bridgeNames)) entries;
+
   in {
     systemd.network.enable = mkForce
       (if config.host.network.manager != null then
@@ -207,6 +216,6 @@ with lib;
       (map (e: {
         name = "30-" + e.name;
         value = e.value;
-      }) entries));
+      }) filteredEntries));
   };
 }
