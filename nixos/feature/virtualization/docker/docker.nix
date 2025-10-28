@@ -152,6 +152,11 @@ in
           type = types.bool;
           description = "Allow for NAT Loopback from br-* interfaces to allow resolving host";
         };
+        createNetworks = mkOption {
+          default = true;
+          type = types.bool;
+          description = "Automatically create Docker networks defined in networks option on Docker service start";
+        };
       };
       networks = mkOption {
         type = types.attrsOf (types.submodule {
@@ -317,23 +322,25 @@ in
       };
     };
 
-    system.activationScripts.create_docker_networks =
-      let
-        networks = config.host.feature.virtualization.docker.networks;
-        mkCreate = name: net: ''
-          ${config.virtualisation.docker.package}/bin/docker network inspect ${name} > /dev/null || \
-            ${config.virtualisation.docker.package}/bin/docker network create ${name} --subnet ${net.subnet}${if net.driver != null then " --driver ${net.driver}" else ""}
-        '';
-        dockerCheck = ''
-          # Only proceed if the Docker socket is available
-          if [ ! -S /var/run/docker.sock ]; then
-            echo "Docker socket not available, skipping docker network creation"
-            exit 0
-          fi
-        '';
-      in
-        #dockerCheck + "\n" + concatStringsSep "\n" (mapAttrsToList mkCreate networks);
-        concatStringsSep "\n" (mapAttrsToList mkCreate networks);
+    systemd.services.docker-network-setup = mkIf cfg.networking.createNetworks {
+      description = "Create Docker networks";
+      after = [ "docker.service" ];
+      requires = [ "docker.service" ];
+      wantedBy = [ "docker.service" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
+      script =
+        let
+          networks = config.host.feature.virtualization.docker.networks;
+          mkCreate = name: net: ''
+            ${config.virtualisation.docker.package}/bin/docker network inspect ${name} > /dev/null 2>&1 || \
+              echo "Creating Docker network: ${name}" ; ${config.virtualisation.docker.package}/bin/docker network create ${name} --subnet ${net.subnet}${if net.driver != null then " --driver ${net.driver}" else ""}
+          '';
+        in
+          concatStringsSep "\n" (mapAttrsToList mkCreate networks);
+    };
 
     users.groups.docker = {
       members = mkDefault cfg.groupMembers;
