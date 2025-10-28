@@ -13,27 +13,32 @@ with lib;
                 name = mkOption {
                   type = types.nullOr types.str;
                   default = null;
-                  description = "Match by runtime interface name (Name=).";
+                  description = "Match by runtime interface name.";
+                  example= "enp3s0f0";
                 };
                 mac = mkOption {
                   type = types.nullOr types.str;
                   default = null;
-                  description = "Match by current MAC address (MACAddress=).";
+                  description = "Match by current MAC address.";
+                  example = "00:01:02:ab:cd:ef";
                 };
                 permanentMac = mkOption {
                   type = types.nullOr types.str;
                   default = null;
-                  description = "Match by permanent hardware MAC (PermanentMACAddress=).";
+                  description = "Match by permanent hardware MAC.";
+                  example = "00:01:02:ab:cd:ef";
                 };
                 path = mkOption {
                   type = types.nullOr types.str;
                   default = null;
-                  description = "Match by device path (Path=).";
+                  description = "Match by device path.";
+                  example = "/sys/devices/pci0000:00/0000:00:1f.6/net/enp0s31f6";
                 };
                 originalName = mkOption {
                   type = types.nullOr types.str;
                   default = null;
-                  description = "Match by original/kernel name (OriginalName=).";
+                  description = "Match by original/kernel name.";
+                  example = "eth0";
                 };
               };
             });
