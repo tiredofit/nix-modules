@@ -174,3 +174,94 @@ If you prefer to control the bridge MAC explicitly, set `mac = "..."` on the bri
       };
     };
 ```
+
+## Alternate Bridge and VLAN configuration
+
+```
+  network = {
+    interfaces = {
+      enp0 = {
+        match = {
+          mac = "01:02:03:04:05:06";
+        };
+      };
+      veth0 = {
+        match = {
+          mac = "07:08:09:10:1A:1B";
+        };
+        vlans = [
+          "vlan100"
+          "vlan200"
+        ];
+      };
+      br-vlan = {
+        match = {
+          name = "br-vlan";
+        };
+        vlans = [
+          "vlan123" "vlan456" ];
+      };
+    };
+
+    # Define a bridge to attach the VLAN 123 and 456 device. The bridge will be created as `br-vlan` and will enslave `veth0.123` and veth0.456.
+    bridges = {
+      br-vlan = {
+        interfaces = [ "veth0" ];
+        vlan = {
+          filtering = true;
+          defaultPVID = "none";
+          portVLANs = {
+            veth0 = {
+              vlans = [ 123 456 ];
+            };
+          };
+        };
+      };
+    };
+    vlans = {
+      vlan100 = {
+        id = 100;
+      };
+      vlan123 = {
+        id = 123;
+      };
+      vlan200 = {
+        id = 200;
+      };
+      vlan456 = {
+        id = 456;
+      };
+    };
+    networks = {
+      enp0 = {
+        type = "dynamic";
+      };
+      # VLAN 123 on bridge - Static
+      "br-vlan.123" = {
+        match.name = "vlan123";
+        type = "static";
+        ip = "192.168.123.123/24";
+        gateway = "192.168.123.1";
+        dns = [ "192.168.123.1" ];
+      };
+      # VLAN 456 on bridge - DHCP
+      "br-vlan.456" = {
+        match.name = "vlan456";
+        type = "dynamic";
+      };
+      veth0 = {
+        type = "unmanaged";
+      };
+      "veth0.100" = {
+        match.name = "vlan100";
+        type = "dynamic";
+      };
+      "veth0.200" = {
+        match.name = "vlan60";
+        type = "static";
+        ip = "192.168.200.200/24";
+        gateway = "192.168.200.1";
+        dns = [ "192.168.200.1" ];
+      };
+    };
+  };
