@@ -376,7 +376,7 @@ If you prefer to control the bridge MAC explicitly, set `mac = "..."` on the bri
             mac = "00:02:03:04:60";
           };
         };
-        br-veth0 = { # Create VLAN sub-interfaces on br-veth0 (receives tagged traffic from Nucleus)
+        br-veth0 = { # Create VLAN sub-interfaces on br-veth0 (receives tagged traffic from Server)
           match = {
             name = "br-veth0";
           };
@@ -399,7 +399,7 @@ If you prefer to control the bridge MAC explicitly, set `mac = "..."` on the bri
         };
       };
       bridges = {
-        br-veth0 = { # Bridge veth0 to receive all tagged VLAN traffic from Nucleus br-quad2
+        br-veth0 = { # Bridge veth0 to receive all tagged VLAN traffic from Server br-quad2
           interfaces = [ "veth0" ];
         };
         br-vlan200 = { # Then create VLAN-specific bridges for containers/VMs
