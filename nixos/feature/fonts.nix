@@ -23,7 +23,6 @@ in
       packages = with pkgs; [
         dejavu_fonts
         liberation_ttf
-        #material-design-icons
         nerd-fonts.hack
         nerd-fonts.noto
         nerd-fonts.ubuntu
@@ -31,8 +30,13 @@ in
         noto-fonts-color-emoji
         open-sans
         roboto
-        ubuntu_font_family
-      ];
+      ] ++ (
+        if (lib.versionAtLeast lib.version "25.11pre") then [
+          ubuntu-classic
+        ] else [
+          ubuntu_font_family
+        ]
+      );
 
       fontconfig = mkIf graphics.enable {
         enable = mkDefault true;
