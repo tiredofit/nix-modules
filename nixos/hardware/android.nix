@@ -20,7 +20,11 @@ in
 
     environment.systemPackages = with pkgs; [
       android-tools
-      android-udev-rules
-    ];
+    ] ++ (
+      if !(lib.versionAtLeast lib.version "25.11pre") then [
+        android-udev-rules
+      ] else [
+      ]
+    );
   };
 }
