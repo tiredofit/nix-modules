@@ -17,7 +17,7 @@ in
 
   config = mkIf cfg.enable {
     environment.systemPackages = with pkgs; [
-      du-dust
+      (if lib.versionAtLeast lib.version "25.11pre" then dust else du-dust)
     ];
   };
 }
