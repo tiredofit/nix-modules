@@ -326,7 +326,7 @@ in
       description = "Create Docker networks";
       after = [ "docker.service" ];
       requires = [ "docker.service" ];
-      wantedBy = [ "docker.service" ];
+      wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
@@ -335,8 +335,10 @@ in
         let
           networks = config.host.feature.virtualization.docker.networks;
           mkCreate = name: net: ''
-            ${config.virtualisation.docker.package}/bin/docker network inspect ${name} > /dev/null 2>&1 || \
-              echo "Creating Docker network: ${name}" ; ${config.virtualisation.docker.package}/bin/docker network create ${name} --subnet ${net.subnet}${if net.driver != null then " --driver ${net.driver}" else ""}
+            if ! ${config.virtualisation.docker.package}/bin/docker network inspect ${name} > /dev/null 2>&1; then
+              echo "Creating Docker network: ${name}"
+              ${config.virtualisation.docker.package}/bin/docker network create ${name} --subnet ${net.subnet}${if net.driver != null then " --driver ${net.driver}" else ""}
+            fi
           '';
         in
           concatStringsSep "\n" (mapAttrsToList mkCreate networks);
