@@ -5,7 +5,7 @@ let
   container_description = "Enables Traefik reverse proxy container";
   container_image_registry = "docker.io";
   container_image_name = "docker.io/nfrastack/traefik";
-  container_image_tag = "3.5";
+  container_image_tag = "3.6";
   cfg = config.host.container.${container_name};
   hostname = config.host.network.hostname;
 in
@@ -229,13 +229,6 @@ in
           source = "/var/local/data/_system/${container_name}/data";
           target = "/data";
           createIfMissing = mkDefault true;
-          permissions = mkDefault "755";
-        }
-        {
-          source = "/var/local/data/_system/${container_name}/logs";
-          target = "/logs";
-          createIfMissing = mkDefault true;
-          removeCOW = mkDefault true;
           permissions = mkDefault "755";
         }
         {

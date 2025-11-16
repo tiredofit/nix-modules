@@ -4,7 +4,7 @@ let
   container_name = "llng-handler";
   container_description = "Enables LemonLDAP-NG authentication handler container";
   container_image_registry = "docker.io";
-  container_image_name = "docker.io/tiredofit/lemonldap";
+  container_image_name = "docker.io/nfrastack/lemonldap";
   container_image_tag = "latest";
   cfg = config.host.container.${container_name};
   hostname = config.host.network.hostname;
@@ -161,14 +161,14 @@ in
       volumes = [
         {
           source = "/var/local/data/_system/${container_name}/logs";
-          target = "/www/logs";
+          target = "/logs";
           createIfMissing = mkDefault true;
           removeCOW = mkDefault true;
           permissions = mkDefault "755";
         }
         {
-          source = "/var/local/data/_system/${container_name}/config";
-          target = "/etc/lemonldap-ng";
+          source = "/var/local/data/_system/${container_name}/data";
+          target = "/data";
           createIfMissing = mkDefault true;
           permissions = mkDefault "755";
         }
