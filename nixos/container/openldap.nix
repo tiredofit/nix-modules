@@ -4,8 +4,8 @@ let
   container_name = "openldap";
   container_description = "Enables OpenLDAP directory server container";
   container_image_registry = "docker.io";
-  container_image_name = "docker.io/tiredofit/openldap-fusiondirectory";
-  container_image_tag = "2.6-1.4";
+  container_image_name = "docker.io/nfrastack/openldap-fusiondirectory";
+  container_image_tag = "2.6-1.5";
   cfg = config.host.container.${container_name};
   hostname = config.host.network.hostname;
 in
@@ -201,12 +201,6 @@ in
 
       volumes = [
         {
-          source = "/var/local/data/_system/${container_name}/asset/custom-plugins";
-          target = "/assets/fusiondirectory-custom";
-          createIfMissing = mkDefault true;
-          permissions = mkDefault "755";
-        }
-        {
           source = "/var/local/data/_system/${container_name}/backup";
           target = "/data/backup";
           createIfMissing = mkDefault true;
@@ -219,15 +213,10 @@ in
         #  permissions = mkDefault "755";
         #}
         {
-          source = "/var/local/data/_system/${container_name}/config";
-          target = "/etc/openldap/slapd.d";
-          createIfMissing = mkDefault true;
-          permissions = mkDefault "755";
-        }
-        {
           source = "/var/local/data/_system/${container_name}/data";
-          target = "/var/lib/openldap";
+          target = "/data";
           createIfMissing = mkDefault true;
+          removeCOW = mkDefault true;
           permissions = mkDefault "755";
         }
         {
