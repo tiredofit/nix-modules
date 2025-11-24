@@ -26,7 +26,7 @@ in
         nerd-fonts.hack
         nerd-fonts.noto
         nerd-fonts.ubuntu
-        noto-fonts
+        #noto-fonts
         noto-fonts-color-emoji
         open-sans
         roboto
@@ -49,13 +49,13 @@ in
         defaultFonts = {
           serif = [
             "Noto Serif NF"
-            "Noto Serif"
+            #"Noto Serif"
             "Liberation Serif"
             "DejaVu Serif"
           ];
           sansSerif = [
             "Noto Sans NF"
-            "Noto Sans"
+            #"Noto Sans"
             "Roboto"
             "Open Sans"
             "Liberation Sans"
@@ -63,8 +63,8 @@ in
           ];
           monospace = [
             "Hack Nerd Font"
-            "NotoSansM Nerd Font Mono"
-            "Noto Sans Mono"
+            "NotoSansM NF"
+            #"Noto Sans Mono"
             "DejaVu Sans Mono"
             "Liberation Mono"
           ];
