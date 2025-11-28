@@ -4,7 +4,7 @@ let
   container_name = "restic";
   container_description = "Enables Restic backup container";
   container_image_registry = "docker.io";
-  container_image_name = "docker.io/tiredofit/restic";
+  container_image_name = "docker.io/nfrastack/restic";
   container_image_tag = "latest";
   cfg = config.host.container.${container_name};
   hostname = config.host.network.hostname;

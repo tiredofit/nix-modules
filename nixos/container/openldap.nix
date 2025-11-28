@@ -69,6 +69,25 @@ in
           description = "List of additional secret file paths to include";
         };
       };
+      certs = {
+        volume = {
+          source = mkOption {
+            default = "/var/local/data/_system/${container_name}/certs";
+            type = with types; str;
+            description = "Source path for container certs volume.";
+          };
+          target = mkOption {
+            default = "/certs/";
+            type = with types; str;
+            description = "Target path inside container for certs volume.";
+          };
+          readOnly = mkOption {
+            default = false;
+            type = with types; bool;
+            description = "Mount certs volume as readonly.";
+          };
+        };
+      };
       ports = {
         ldap = {
           enable = mkOption {
@@ -206,12 +225,12 @@ in
           createIfMissing = mkDefault true;
           permissions = mkDefault "755";
         }
-        #{
-        #  source = "/var/local/data/_system/${container_name}/certs";
-        #  target = "/certs";
-        #  createIfMissing = mkDefault true;
-        #  permissions = mkDefault "755";
-        #}
+        {
+          source = cfg.certs.volume.source;
+          target = cfg.certs.volume.target;
+          createIfMissing = mkDefault false;
+          readOnly = mkDefault cfg.certs.volume.readOnly;
+        }
         {
           source = "/var/local/data/_system/${container_name}/data";
           target = "/data";
@@ -225,12 +244,6 @@ in
           createIfMissing = mkDefault true;
           removeCOW = mkDefault true;
           permissions = mkDefault "755";
-        }
-        {
-          source = "/var/local/data/_system/traefik-internal/certs/dump/${config.host.network.domainname}";
-          target = "/certs";
-          createIfMissing = mkDefault false;
-          readOnly = mkDefault true;
         }
       ];
 
