@@ -30,13 +30,8 @@ in
         noto-fonts-color-emoji
         open-sans
         roboto
-      ] ++ (
-        if (lib.versionAtLeast lib.version "25.11pre") then [
-          ubuntu-classic
-        ] else [
-          ubuntu_font_family
-        ]
-      );
+        ubuntu-classic
+      ];
 
       fontconfig = mkIf graphics.enable {
         enable = mkDefault true;
@@ -49,13 +44,11 @@ in
         defaultFonts = {
           serif = [
             "Noto Serif NF"
-            #"Noto Serif"
             "Liberation Serif"
             "DejaVu Serif"
           ];
           sansSerif = [
             "Noto Sans NF"
-            #"Noto Sans"
             "Roboto"
             "Open Sans"
             "Liberation Sans"
@@ -64,7 +57,6 @@ in
           monospace = [
             "Hack Nerd Font"
             "NotoSansM NF"
-            #"Noto Sans Mono"
             "DejaVu Sans Mono"
             "Liberation Mono"
           ];
