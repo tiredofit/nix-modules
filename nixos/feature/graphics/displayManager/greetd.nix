@@ -24,16 +24,12 @@ with lib;
 
     services = {
       displayManager = {
-        gdm = {
-          enable = mkForce false;
-        };
-        sddm = {
-          enable = mkForce false;
-        };
+        sddm.enable = mkForce false;
+        gdm.enable = mkForce false;
       };
       greetd = {
         enable = mkDefault true;
-        settings = mkDefault {
+        settings = {
           default_session = {
             command = mkDefault (
               let
@@ -51,17 +47,9 @@ with lib;
           };
         };
       };
-
-      xserver = {
-        displayManager = {
-          gdm = {
-            enable = mkForce false;
-          };
-          lightdm = {
-            enable = mkForce false;
-          };
-          startx.enable = config.services.xserver.enable;
-        };
+      xserver.displayManager = {
+        lightdm.enable = mkForce false;
+        startx.enable = config.services.xserver.enable;
       };
     };
   };
