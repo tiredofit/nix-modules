@@ -24,25 +24,23 @@ with lib;
 
     services = {
       displayManager = {
-        sddm = {
-          enable = mkForce false;
-        };
-      }
-      // (lib.optionalAttrs (lib.versionAtLeast lib.version "25.11pre") {
         gdm = {
           enable = mkForce false;
         };
-      });
+        sddm = {
+          enable = mkForce false;
+        };
+      };
       greetd = {
         enable = mkDefault true;
-        settings = {
+        settings = mkDefault {
           default_session = {
             command = mkDefault (
               let
                 greeter = config.host.feature.graphics.displayManager.greetd.greeter.name;
-                gtkgreetBin = if lib.versionAtLeast lib.version "25.11pre" then "${pkgs.gtkgreet}/bin/gtkgreet" else "${pkgs.greetd.gtkgreet}/bin/gtkgreet";
-                regreetBin = if lib.versionAtLeast lib.version "25.11pre" then "${pkgs.regreet}/bin/regreet" else "${pkgs.greetd.regreet}/bin/regreet";
-                tuigreetBin = if lib.versionAtLeast lib.version "25.11pre" then "${pkgs.tuigreet}/bin/tuigreet" else "${pkgs.greetd.tuigreet}/bin/tuigreet";
+                gtkgreetBin = "${pkgs.gtkgreet}/bin/gtkgreet";
+                regreetBin = "${pkgs.regreet}/bin/regreet";
+                tuigreetBin = "${pkgs.tuigreet}/bin/tuigreet";
               in
                 if greeter == "tuigreet" then "${tuigreetBin} --time"
                 else if greeter == "gtk" then gtkgreetBin
@@ -56,16 +54,14 @@ with lib;
 
       xserver = {
         displayManager = {
+          gdm = {
+            enable = mkForce false;
+          };
           lightdm = {
             enable = mkForce false;
           };
           startx.enable = config.services.xserver.enable;
-        }
-        // (lib.optionalAttrs (!lib.versionAtLeast lib.version "25.11pre") {
-          gdm = {
-            enable = mkForce false;
-          };
-        });
+        };
       };
     };
   };
