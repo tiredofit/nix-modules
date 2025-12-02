@@ -347,9 +347,6 @@ in
   imports = [
     inputs.apple-silicon.nixosModules.default
   ];
-  #imports = lib.optionals (lib.versionOlder lib.version "25.05pre") [
-  #  (lib.mkAliasOptionModule ["services" "pulseaudio" "enable"] ["hardware" "pulseaudio" "enable"])
-  #];
 
   config = {
     environment = {
