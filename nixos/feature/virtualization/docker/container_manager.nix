@@ -28,7 +28,7 @@ in
   config = mkIf cfg.enable {
     environment.systemPackages = with pkgs; [
       (writeShellScriptBin "container-tool" ''
-        set -euo pipefail
+        #set -euo pipefail
 
         export DOCKER_COMPOSE_TIMEOUT=${toString config.host.feature.virtualization.docker.daemon.shutdownTimeout}
         if ! [[ "$DOCKER_COMPOSE_TIMEOUT" =~ ^[0-9]+$ ]]; then
@@ -210,7 +210,7 @@ in
               if [[ $stack_image =~ .*"db-backup".* ]] ; then
                 stack_container_name=$(echo "$stack_image" | $awk_bin '{print $1}')
                 echo "** Backing up database for '$stack_container_name' before stopping"
-                $docker_bin exec $stack_container_name /usr/local/bin/backup-now
+                $docker_bin exec $stack_container_name backup-now
               fi
             fi
             echo "** Gracefully stopping compose stack: $stack"
