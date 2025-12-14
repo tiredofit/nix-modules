@@ -112,7 +112,7 @@ in
           PermitRootLogin = mkDefault "no" ;
           PermitTunnel = mkDefault true;
           PermitTTY = mkDefault true;
-          PrintLastLog = mkDefault true;
+          PrintLastLog = mkDefault false;
           PubkeyAuthentication = mkDefault true;
           RekeyLimit = mkDefault "default 1d";
           StreamLocalBindUnlink = mkDefault true;
