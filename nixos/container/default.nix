@@ -1,22 +1,26 @@
-{lib, ...}:
+{ lib, ... }:
 
-with lib;
-{
-  imports = [
-    ./coredns.nix
-    ./clamav.nix
-    ./fluentbit.nix
-    ./llng-handler.nix
-    ./openldap.nix
-    ./postfix-relay.nix
-    ./restic.nix
-    ./s3ql.nix
-    ./socket-proxy.nix
-    ./tcc.nix
-    ./tinc.nix
-    ./traefik.nix
-    ./traefik-internal.nix
-    ./unbound.nix
-    ./zabbix-proxy.nix
+let
+  dir = ./.;
+  files = builtins.readDir dir;
+  ignoreList = [
+
   ];
+  importable = lib.filterAttrs (name: type:
+    (type == "regular" && lib.hasSuffix ".nix" name && name != "default.nix" && !(lib.elem name ignoreList))
+    || (
+      type == "directory"
+      && name != "default.nix"
+      && !(lib.elem name ignoreList)
+      && builtins.pathExists (dir + "/${name}/default.nix")
+    )
+  ) files;
+  imports = lib.mapAttrsToList (name: type:
+    if type == "regular"
+    then ./${name}
+    else ./${name}/default.nix
+  ) importable;
+in
+{
+  imports = imports;
 }
