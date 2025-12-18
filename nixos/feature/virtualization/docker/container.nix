@@ -496,7 +496,6 @@ let
 
   # Generate volume preparation script
   generateVolumePrep = cfg: ''
-    # Prepare volumes
     ${concatMapStringsSep "\n    " (vol: ''
       if [ "${toString vol.createIfMissing}" = "true" ]; then
         if [ ! -d "${vol.source}" ]; then
@@ -515,7 +514,6 @@ let
     '') cfg.volumes}
   '';
 
-  # Generate volume arguments for Docker
   generateVolumeArgs = cfg: concatMapStringsSep " " (vol:
     let
       baseMount = "${vol.source}:${vol.target}";
@@ -528,23 +526,12 @@ let
     "--volume ${fullMountString}"
   ) cfg.volumes;
 
-  # Generate port arguments
   generatePortArgs = cfg: ''
     PORT_ARGS=""
     ${concatMapStringsSep "\n    " (portCfg: ''
       if [ "${if portCfg.enable then "true" else "false"}" = "true" ]; then
         echo "Processing port ${portCfg.host} with enable=${if portCfg.enable then "true" else "false"}"
-        case "${portCfg.host}" in
-          "80")
-            IP="$BINDING_IP_80"
-            ;;
-          "443")
-            IP="$BINDING_IP_443"
-            ;;
-          *)
-            eval "IP=\$BINDING_IP_${portCfg.host}"
-            ;;
-        esac
+        eval "IP=\$BINDING_IP_${portCfg.host}"
         if [ -n "$IP" ]; then
           PORT_ARGS="$PORT_ARGS -p $IP:${portCfg.host}:${portCfg.container}/${portCfg.protocol}"
         else
@@ -555,7 +542,6 @@ let
     '') cfg.ports}
   '';
 
-  # Generate label arguments
   generateLabelArgs = cfg: concatMapStringsSep " " (labelArg: labelArg)
     (mapAttrsToList (k: v:
       let
@@ -570,7 +556,6 @@ let
       "--label='${k}=${val}'"
     ) cfg.labels);
 
-  # Generate device arguments
   generateDeviceArgs = cfg: concatMapStringsSep " " (device:
     let
       containerPath = if device.container != "" then device.container else device.host;
@@ -580,11 +565,9 @@ let
     "--device=${fullDeviceString}"
   ) cfg.devices;
 
-  # Helper function to create systemd service for containers
   mkService = name: container: let
     mkAfter = map (x: "docker-${x}.service") (container.serviceOrder.after or []);
 
-    # Generate environment files (including SOPS secrets)
     allEnvironmentFiles = (generateEnvironmentFiles name container) ++ (container.environmentFiles or []);
 
     convertedContainer = {
@@ -598,7 +581,6 @@ let
       workdir = container.workdir or null;
       dependsOn = (container.serviceOrder.after or []) ++ (container.dependsOn or []);
 
-      # Convert volumes from new format to old format
       volumes = map (vol:
         let
           mountString = "${vol.source}:${vol.target}";
@@ -606,7 +588,6 @@ let
         if vol.options != "" then "${mountString}:${vol.options}" else mountString
       ) container.volumes;
 
-      # Convert ports from new format to old format
       ports = map (port: "${port.host}:${port.container}") container.ports;
 
       environment = container.environment;
@@ -614,7 +595,6 @@ let
       labels = container.labels;
       networks = container.networking.networks;
 
-      # Convert extraOptions
       extraOptions = container.extraOptions
         ++ optional (container.resources.cpus != null) "--cpus=${container.resources.cpus}"
         ++ optional (container.resources.memory.max != null) "--memory=${container.resources.memory.max}"
