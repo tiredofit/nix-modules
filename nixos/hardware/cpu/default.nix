@@ -2,7 +2,6 @@
 with lib;
 {
   imports = [
-    ./apple.nix
     ./ampere.nix
     ./amd.nix
     ./intel.nix
@@ -11,7 +10,7 @@ with lib;
   options = {
     host.hardware = {
       cpu = mkOption {
-        type = types.enum ["amd" "ampere" "apple" "intel" "vm-amd" "vm-intel" null];
+        type = types.enum ["amd" "ampere" "intel" "vm-amd" "vm-intel" null];
         default = null;
         description = "Type of CPU";
       };

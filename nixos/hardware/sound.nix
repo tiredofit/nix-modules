@@ -336,29 +336,14 @@ in
         default = "pipewire";
         description = "Which sound server (pulseaudio/pipewire)";
       };
-      apple.enable = mkOption {
-        default = false;
-        type = with types; bool;
-        description = "Enable Apple Sound Support";
-      };
     };
   };
-
-  imports = [
-    inputs.apple-silicon.nixosModules.default
-  ];
 
   config = {
     environment = {
       systemPackages = mkIf cfg.enable [
         script_sound-tool
       ];
-    };
-
-    hardware = {
-      asahi = mkIf (cfg.apple.enable && (device.cpu == "apple")) {
-        setupAsahiSound = mkIf (cfg.apple.enable && (device.cpu == "apple")) (mkForce true);
-      };
     };
 
     services.pulseaudio = lib.mkMerge [
