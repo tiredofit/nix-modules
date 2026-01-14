@@ -309,8 +309,8 @@ in
                   [FILTER]
                       Name record_modifier
                       Match host.*
-                      Record hostname ${config.networking.HostName}
-                      Record container_name ${config.networking.HostName}
+                      Record hostname ${config.networking.hostName}
+                      Record container_name ${config.networking.hostName}
                       Record product systemd
          '';
          mode = "0440";
