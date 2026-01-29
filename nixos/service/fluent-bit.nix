@@ -261,7 +261,7 @@ in
       ## TODO This could be better modularized for the docker socket
       "fluent-bit/conf.d/in_docker.conf" = mkIf ((cfg.input.docker.enable) && (config.host.feature.virtualization.docker.enable)) {
          text = ''
-                  [INPUT]
+                 [INPUT]
                       Name   docker_events
                       Unix_Path /var/run/docker.sock
                       Tag docker-events
