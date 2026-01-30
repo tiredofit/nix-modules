@@ -18,7 +18,7 @@ in
   config = mkIf cfg.enable {
     services = {
       printing = {
-        enable = true;
+        enable = mkDefault true;
         drivers = with pkgs;
         [
           gutenprint
@@ -27,9 +27,9 @@ in
       };
 
       avahi = { # required for network discovery of printers
-        enable = true;
-        nssmdns4 = true; # resolve .local domains for printers
-        openFirewall = true;
+        enable = mkDefault true;
+        nssmdns4 = mkDefault true; # resolve .local domains for printers
+        openFirewall = mkDefault true;
       };
     };
 
