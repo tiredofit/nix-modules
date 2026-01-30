@@ -24,18 +24,18 @@ in
       yubioath-flutter
     ];
 
-    hardware.gpgSmartcards.enable = true;
+    hardware.gpgSmartcards.enable = mkDefault true;
 
     services = {
-      pcscd.enable = true;
+      pcscd.enable = mkDefault true;
       udev.packages = [pkgs.yubikey-personalization];
     };
 
     programs = {
-      ssh.startAgent = false;
+      ssh.startAgent = mkDefault false;
       gnupg.agent = {
-        enable = true;
-        enableSSHSupport = true;
+        enable = mkDefault true;
+        enableSSHSupport = mkDefault true;
       };
     };
   };
