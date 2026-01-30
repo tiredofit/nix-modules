@@ -19,7 +19,7 @@ in
     services.tailscale = {
       enable = true;
       package = pkgs.unstable.tailscale;
-      useRoutingFeatures = lib.mkDefault "client";
+      useRoutingFeatures = mkDefault "client";
     };
     networking.firewall = {
       checkReversePath = "loose";
