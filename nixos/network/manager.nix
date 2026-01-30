@@ -46,7 +46,7 @@ in
       services = {
         systemd-networkd-wait-online.enable = if (cfg == "systemd-networkd" || cfg == "both") then pkgs.lib.mkForce false else mkDefault (cfg == "systemd-networkd" || cfg == "both");
         systemd-networkd.stopIfChanged = if (cfg == "systemd-networkd" || cfg == "both") then pkgs.lib.mkForce false else false;
-        systemd-resolved.stopIfChanged = false;
+        systemd-resolved.stopIfChanged = mkDefault false;
         NetworkManager-wait-online.enable = mkIf (cfg == "networkmanager" || cfg == "both") false;
       };
     };
