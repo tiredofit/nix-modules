@@ -52,8 +52,8 @@ in
 
         programs.steam = {
           enable = true;
-          remotePlay.openFirewall = true;
-          dedicatedServer.openFirewall = true;
+          remotePlay.openFirewall = mkDefault true;
+          dedicatedServer.openFirewall = mkDefault true;
         };
       };
 }
