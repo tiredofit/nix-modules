@@ -16,29 +16,37 @@ in
   };
 
   config = mkIf cfg.enable {
-    #boot.kernelParams = ["btusb"];
-    hardware.bluetooth = {
-      enable = true;
-      package = pkgs.bluez5-experimental;
-      #hsphfpd.enable = true;
-      powerOnBoot = true;
-      disabledPlugins = ["sap"];
-      settings = {
-        General = {
-          JustWorksRepairing = "always";
-          MultiProfile = "multiple";
-        };
-      };
+    boot = {
+      extraModulePackages = with config.boot.kernelPackages; [ ];
+      extraModprobeConfig = ''
+        options bluetooth disable_ertm=Y
+      '';
     };
 
     environment.systemPackages = with pkgs; [
       bluetuith
     ];
 
-    services.blueman.enable = true;
+    hardware.bluetooth = {
+      enable = true;
+      powerOnBoot = mkDefault true;
+      disabledPlugins = mkDefault ["sap"];
+      settings = {
+        General = {
+          Class = mkDefault "0x000100";
+          Experimental = mkDefault true;
+          FastConnectable = mkDefault true;
+          JustWorksRepairing = mkDefault "always";
+        };
+      };
+    };
 
     host.filesystem.impermanence.directories = mkIf config.host.filesystem.impermanence.enable [
-      "/var/lib/bluetooth"               # Bluetooth
+      "/var/lib/bluetooth"
     ];
+
+    services = {
+      blueman.enable = mkDefault true;
+    };
   };
 }
