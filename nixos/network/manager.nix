@@ -30,8 +30,8 @@ in
         wifi.backend = config.host.hardware.wireless.backend;
       };
       wireless = mkIf (cfg == "networkmanager" || cfg == "both") {
-        enable = mkForce false;
-        #iwd.enable = mkForce false;
+        enable = mkDefault true;
+        #iwd.enable = mkDefault false;
       };
     };
 
