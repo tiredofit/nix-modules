@@ -49,11 +49,12 @@ in
 
     networking = {
       wireless = mkIf ((config.host.network.manager != "networkmanager") && (config.host.network.manager != "both")) {
+        athUserRegulatoryDomain = mkDefault true;
+        enable = mkDefault (cfg.backend == "wpa_supplicant");
         iwd = mkIf (cfg.backend == "iwd") {
           enable = mkDefault true;
           package = mkDefault pkgs.unstable.iwd;
         };
-        enable = mkDefault (cfg.backend == "wpa_supplicant");
       };
     };
   };
