@@ -31,14 +31,19 @@ with lib;
         enable = mkDefault true;
         settings = {
           default_session = {
-            command = mkDefault (
+              command = mkDefault (
               let
                 greeter = config.host.feature.graphics.displayManager.greetd.greeter.name;
                 gtkgreetBin = "${pkgs.gtkgreet}/bin/gtkgreet";
                 regreetBin = "${pkgs.regreet}/bin/regreet";
                 tuigreetBin = "${pkgs.tuigreet}/bin/tuigreet";
-              in
-                if greeter == "tuigreet" then "${tuigreetBin} --time"
+                desktops = config.services.displayManager.sessionData.desktops;
+                tuigreetSessionsFlag = if config.host.feature.graphics.backend == "wayland" then
+                  " --sessions ${desktops}/share/wayland-sessions "
+                else
+                  "";              in
+                if greeter == "tuigreet" then
+                  "${tuigreetBin} --time --remember --remember-user-session" + tuigreetSessionsFlag
                 else if greeter == "gtk" then gtkgreetBin
                 else if greeter == "regreet" then regreetBin
                 else tuigreetBin
