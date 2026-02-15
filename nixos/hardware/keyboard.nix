@@ -16,7 +16,7 @@ in
   };
 
   config = mkIf cfg.enable {
-    hardware.keyboard.qmk.enable = mkDefault true;
+    hardware.keyboard.qmk.enable = true;
 
     environment.systemPackages = with pkgs; [
       qmk
