@@ -39,17 +39,16 @@ in
       };
     };
 
-    networking = lib.mkIf cfg.openFirewall.enable {
+    networking = mkIf cfg.openFirewall.enable {
       firewall = {
-        allowedTCPPorts = lib.mkIf (cfg.openFirewall.tcpPorts != []) cfg.openFirewall.tcpPorts;
-        allowedUDPPorts = lib.mkIf (cfg.openFirewall.udpPorts != []) cfg.openFirewall.udpPorts;
+        allowedTCPPorts = mkIf (cfg.openFirewall.tcpPorts != []) cfg.openFirewall.tcpPorts;
+        allowedUDPPorts = mkIf (cfg.openFirewall.udpPorts != []) cfg.openFirewall.udpPorts;
       };
     };
 
     host = {
       filesystem = {
-        impermanence.directories =
-          lib.mkIf config.host.filesystem.impermanence.enable [
+        impermanence.directories = mkIf config.host.filesystem.impermanence.enable [
             "/var/lib/syncthing"
           ];
       };
