@@ -53,6 +53,8 @@ in
     boot.initrd = lib.mkMerge [
       (lib.mkIf ((cfg_impermanence.enable) && (!cfg_encrypt.enable) && (config.host.filesystem.btrfs.enable)) {
         postDeviceCommands = pkgs.lib.mkBefore ''
+          _awk=${pkgs.gawk}/bin/gawk
+          _grep=${pkgs.gnugrep}/bin/grep
           mkdir -p /mnt
           btrfs device scan --all-devices
 
@@ -64,7 +66,7 @@ in
               echo "[impermanence] checking $d" >&2
               _tmp=$(mktemp -d) || continue
               if mount -t btrfs -o ro UUID=$d "$_tmp" 2>/dev/null; then
-                if btrfs subvolume list "$_tmp" 2>/dev/null | awk '{print $9}' | grep -qx "$root_subvol"; then
+                if btrfs subvolume list "$_tmp" 2>/dev/null | $_awk '{print $9}' | $_grep -qx "$root_subvol"; then
                   umount "$_tmp" 2>/dev/null || true
                   rmdir "$_tmp" 2>/dev/null || true
                   echo "$d"
@@ -116,6 +118,8 @@ in
             unitConfig.DefaultDependencies = "no";
             serviceConfig.Type = "oneshot";
             script = ''
+              _awk=${pkgs.gawk}/bin/gawk
+              _grep=${pkgs.gnugrep}/bin/grep
               mkdir -p /mnt
               # If encrypted, prefer blkid-discovered btrfs devices and the specified mapper device.
               find_btrfs_device() {
@@ -126,7 +130,7 @@ in
                   echo "[impermanence] checking mapper $mapper" >&2
                   _tmp=$(mktemp -d) || true
                   if [ -n "$_tmp" ] && mount -o ro "$mapper" "$_tmp" 2>/dev/null; then
-                    if btrfs subvolume list "$_tmp" 2>/dev/null | awk '{print $9}' | grep -qx "$root_subvol"; then
+                    if btrfs subvolume list "$_tmp" 2>/dev/null | $_awk '{print $9}' | $_grep -qx "$root_subvol"; then
                       umount "$_tmp" 2>/dev/null || true
                       rmdir "$_tmp" 2>/dev/null || true
                       echo "$mapper" && return 0
@@ -142,7 +146,7 @@ in
                   echo "[impermanence] checking $d" >&2
                   _tmp=$(mktemp -d) || continue
                   if mount -o ro "$d" "$_tmp" 2>/dev/null; then
-                    if btrfs subvolume list "$_tmp" 2>/dev/null | awk '{print $9}' | grep -qx "$root_subvol"; then
+                    if btrfs subvolume list "$_tmp" 2>/dev/null | $_awk '{print $9}' | $_grep -qx "$root_subvol"; then
                       umount "$_tmp" 2>/dev/null || true
                       rmdir "$_tmp" 2>/dev/null || true
                       echo "$d" && return 0
@@ -157,7 +161,7 @@ in
                   echo "[impermanence] checking $dev" >&2
                   _tmp=$(mktemp -d) || continue
                   if mount -o ro "$dev" "$_tmp" 2>/dev/null; then
-                    if btrfs subvolume list "$_tmp" 2>/dev/null | awk '{print $9}' | grep -qx "$root_subvol"; then
+                    if btrfs subvolume list "$_tmp" 2>/dev/null | $_awk '{print $9}' | $_grep -qx "$root_subvol"; then
                       umount "$_tmp" 2>/dev/null || true
                       rmdir "$_tmp" 2>/dev/null || true
                       echo "$dev" && return 0
@@ -172,7 +176,7 @@ in
                   echo "[impermanence] checking $dev" >&2
                   _tmp=$(mktemp -d) || continue
                   if mount -o ro "$dev" "$_tmp" 2>/dev/null; then
-                    if btrfs subvolume list "$_tmp" 2>/dev/null | awk '{print $9}' | grep -qx "$root_subvol"; then
+                    if btrfs subvolume list "$_tmp" 2>/dev/null | $_awk '{print $9}' | $_grep -qx "$root_subvol"; then
                       umount "$_tmp" 2>/dev/null || true
                       rmdir "$_tmp" 2>/dev/null || true
                       echo "$dev" && return 0
@@ -216,7 +220,9 @@ in
         let
           # Running this will show what changed during boot to potentially use for persisting
           impermanence-fsdiff = pkgs.writeShellScriptBin "impermanence-fsdiff" ''
-            _mount_drive=''${1:-"$(mount | grep '.* on / type btrfs' | awk '{ print $1}')"}
+            _awk=${pkgs.gawk}/bin/gawk
+            _grep=${pkgs.gnugrep}/bin/grep
+            _mount_drive=''${1:-"$(mount | $_grep '.* on / type btrfs' | $_awk '{ print $1}')"}
             _tmp_root=$(mktemp -d)
             mkdir -p "$_tmp_root"
             sudo mount -o subvol=/ "$_mount_drive" "$_tmp_root" > /dev/null 2>&1
