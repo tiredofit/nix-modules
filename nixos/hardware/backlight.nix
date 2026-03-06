@@ -28,13 +28,17 @@ in
   };
 
   config = mkIf cfg.enable {
+    environment.systemPackages = with pkgs; [
+      brightnessctl
+    ];
+
     hardware.acpilight.enable = mkDefault true;
-    programs.light.enable = mkDefault true;
+
     services.actkbd = {
       enable = mkDefault true;
       bindings = [
-        { keys = [ cfg.keys.up ]; events = [ "key" ]; command = "/run/current-system/sw/bin/light -A 10"; }
-        { keys = [ cfg.keys.down ]; events = [ "key" ]; command = "/run/current-system/sw/bin/light -U 10"; }
+        { keys = [ cfg.keys.up ]; events = [ "key" ]; command = "/run/current-system/sw/bin/brightnessctl -A 10%-"; }
+        { keys = [ cfg.keys.down ]; events = [ "key" ]; command = "/run/current-system/sw/bin/brightnessclt -U +10%"; }
       ];
     };
   };
