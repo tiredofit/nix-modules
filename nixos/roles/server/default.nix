@@ -111,10 +111,11 @@ in
     systemd = {
       enableEmergencyMode = mkDefault false;        # Allow system to continue booting in headless mode.
 
-      sleep.extraConfig = ''
-        AllowSuspend=no
-        AllowHibernation=no
-      '';
+      sleep.settings.Sleep = {
+        AllowSuspend = "no";
+        AllowHibernation = "no";
+      };
+
       settings.Manager = {                        # See https://0pointer.de/blog/projects/watchdog.html
         RuntimeWatchdogSec = mkDefault "20s";     # Hardware watchdog reboot after 20s
         RebootWatchdogSec = mkDefault "30s";      # Force reboot when hangs after 30s. See https://utcc.utoronto.ca/~cks/space/blog/linux/SystemdShutdownWatchdog
