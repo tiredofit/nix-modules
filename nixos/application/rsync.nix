@@ -15,11 +15,22 @@ in
     };
   };
 
-  config = mkIf cfg.enable {
-    environment.systemPackages = with pkgs; [
-      rsync
-    ];
+  config = mkIf cfg.enable (let
+    aliases = {
+      rsync = "rsync -aXxtv";
+    };
+  in {
+      environment.systemPackages = with pkgs; [
+        rsync
+      ];
 
-    ## TODO Add bash aliases
-  };
+      programs = {
+        bash = {
+          shellAliases = aliases;
+        };
+        zsh = {
+          shellAliases = aliases;
+        };
+      };
+  });
 }
