@@ -198,6 +198,18 @@ in
           fi
         '';
       };
+      zsh = {
+        interactiveShellInit = ''
+          # Only load Liquidprompt in interactive shells
+          if [[ -o interactive ]]; then
+             if [ -f /home/$USER/.nix-profile/bin/liquidprompt ]; then
+                source /home/$USER/.nix-profile/bin/liquidprompt
+             elif [ -f /home/$USER/.local/state/nix/profile/bin/liquidprompt ]; then
+                source /home/$USER/.local/state/nix/profile/bin/liquidprompt
+             fi
+          fi
+        '';
+      };
     };
   };
 }
