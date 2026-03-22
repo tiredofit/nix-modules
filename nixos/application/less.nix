@@ -26,7 +26,7 @@ in
         commands = {
           s = "back-line";
           t = "forw-line";
-        }
+        };
       };
 
       bash = {
