@@ -105,7 +105,7 @@ in
         systemd = {
           enable = true;
           services.rollback = {
-            description = "Rollback BTRFS root subvolume to a pristine state";
+            description = "[impermanence] Rollback BTRFS root subvolume to a pristine state";
             wantedBy = [
               "initrd.target"
             ];
@@ -158,7 +158,7 @@ in
 
                 for dev in $(ls /dev/mapper 2>/dev/null | sed 's/^/\/dev\/mapper\//'); do
                   [ -e "$dev" ] || continue
-                  echo "[impermanence] checking $dev" >&2
+                  echo "[impermanence] [mapper] checking $dev" >&2
                   _tmp=$(mktemp -d) || continue
                   if mount -o ro "$dev" "$_tmp" 2>/dev/null; then
                     if btrfs subvolume list "$_tmp" 2>/dev/null | $_awk '{print $9}' | $_grep -qx "$root_subvol"; then
@@ -173,7 +173,7 @@ in
 
                 for dev in /dev/*[0-9] /dev/nvme*n*p* /dev/sd*; do
                   [ -e "$dev" ] || continue
-                  echo "[impermanence] checking $dev" >&2
+                  echo "[impermanence] [nvme|sd] checking $dev" >&2
                   _tmp=$(mktemp -d) || continue
                   if mount -o ro "$dev" "$_tmp" 2>/dev/null; then
                     if btrfs subvolume list "$_tmp" 2>/dev/null | $_awk '{print $9}' | $_grep -qx "$root_subvol"; then
