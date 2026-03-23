@@ -3,7 +3,6 @@
 let
   cfg = config.host.application.starship;
   tomlFormat = pkgs.formats.toml { };
-  # Only generate a TOML and install it if `programs.starship.settings` is a non-empty attrset.
   starshipConfig = "/etc/starship.toml";
   programsSet = config.programs or {};
   starshipProgram = programsSet.starship or {};
@@ -16,7 +15,7 @@ in
   options = {
     host.application.starship = {
       enable = mkOption {
-        default = true;
+        default = false;
         type = with types; bool;
         description = "Enables starship";
       };
@@ -24,7 +23,6 @@ in
   };
 
   config = mkIf cfg.enable {
-    # Only export STARSHIP_CONFIG when we actually generate a TOML
     environment = lib.optionalAttrs hasSettings {
       sessionVariables = {
         STARSHIP_CONFIG = starshipConfig;
@@ -54,7 +52,6 @@ in
       };
     };
 
-    # Only add the activation script if we have settings to write
     system.activationScripts = lib.optionalAttrs hasSettings {
       starshipToml = lib.stringAfter [ "etc" ] ''
         install -m 0644 ${generatedToml} ${starshipConfig}
