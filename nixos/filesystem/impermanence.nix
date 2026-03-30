@@ -105,7 +105,7 @@ in
         systemd = {
           enable = true;
           services.rollback = {
-            description = "[impermanence] Rollback BTRFS root subvolume to a pristine state";
+            description = "[impermanence] [crypt] Rollback BTRFS root subvolume to a pristine state";
             wantedBy = [
               "initrd.target"
             ];
@@ -118,6 +118,7 @@ in
             unitConfig.DefaultDependencies = "no";
             serviceConfig.Type = "oneshot";
             script = ''
+              set -x
               _awk=${pkgs.gawk}/bin/gawk
               _grep=${pkgs.gnugrep}/bin/grep
               mkdir -p /mnt
@@ -127,7 +128,7 @@ in
                 mapper=/dev/mapper/${cfg_encrypt.encrypted-partition}
 
                 if [ -e "$mapper" ]; then
-                  echo "[impermanence] checking mapper $mapper" >&2
+                  echo "[impermanence] [crypt] checking mapper $mapper" >&2
                   _tmp=$(mktemp -d) || true
                   if [ -n "$_tmp" ] && mount -o ro "$mapper" "$_tmp" 2>/dev/null; then
                     if btrfs subvolume list "$_tmp" 2>/dev/null | $_awk '{print $9}' | $_grep -qx "$root_subvol"; then
@@ -185,14 +186,14 @@ in
                   fi
                   rmdir "$_tmp" 2>/dev/null || true
                 done
-
+                set +x
                 return 1
               }
-
+set -x
               BTRFS_DEV=$(find_btrfs_device)
               find_rc=$?
               if [ $find_rc -ne 0 ] || [ -z "$BTRFS_DEV" ]; then
-                echo "[impermanence] Could not find btrfs device containing subvolume ${cfg_impermanence.root-subvol}" >&2
+                echo "[impermanence] [crypt] Could not find btrfs device containing subvolume ${cfg_impermanence.root-subvol}" >&2
                 exit 1
               fi
 
@@ -209,6 +210,7 @@ in
               btrfs subvolume snapshot /mnt/${cfg_impermanence.blank-root-subvol} /mnt/${cfg_impermanence.root-subvol}
               mkdir -p /mnt/${cfg_impermanence.root-subvol}/mnt
               umount /mnt
+              set +x
             '';
           };
         };

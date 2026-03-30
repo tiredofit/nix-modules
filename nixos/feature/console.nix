@@ -13,7 +13,7 @@ in
         description = "Enables early console setup";
       };
       font = mkOption {
-        default = "ter-116n";
+        default = null;
         type = with types; str;
         description = "Sets the console font";
       };
