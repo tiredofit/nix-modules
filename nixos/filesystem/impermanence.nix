@@ -52,9 +52,10 @@ in
   {
     boot.initrd = lib.mkMerge [
       (lib.mkIf ((cfg_impermanence.enable) && (!cfg_encrypt.enable) && (config.host.filesystem.btrfs.enable)) {
+        extraUtilsCommands = ''
+          copy_bin_and_libs ${pkgs.busybox}/bin/busybox
+        '';
         postDeviceCommands = pkgs.lib.mkBefore ''
-          _awk=${pkgs.gawk}/bin/gawk
-          _grep=${pkgs.gnugrep}/bin/grep
           mkdir -p /mnt
           btrfs device scan --all-devices
 
@@ -66,7 +67,7 @@ in
               echo "[impermanence] checking $d" >&2
               _tmp=$(mktemp -d) || continue
               if mount -t btrfs -o ro UUID=$d "$_tmp" 2>/dev/null; then
-                if btrfs subvolume list "$_tmp" 2>/dev/null | $_awk '{print $9}' | $_grep -qx "$root_subvol"; then
+                if btrfs subvolume list "$_tmp" 2>/dev/null | busybox awk '{print $9}' | busybox grep -qx "$root_subvol"; then
                   umount "$_tmp" 2>/dev/null || true
                   rmdir "$_tmp" 2>/dev/null || true
                   echo "$d"
@@ -104,6 +105,9 @@ in
       (lib.mkIf ((cfg_impermanence.enable) && (cfg_encrypt.enable) && (config.host.filesystem.btrfs.enable)) {
         systemd = {
           enable = true;
+          #initrdBin = [ pkgs.busybox pkgs.gnugrep pkgs.gnused pkgs.gawk ];
+          initrdBin = [ pkgs.busybox ];
+
           services.rollback = {
             description = "[impermanence] [crypt] Rollback BTRFS root subvolume to a pristine state";
             wantedBy = [
@@ -118,51 +122,46 @@ in
             unitConfig.DefaultDependencies = "no";
             serviceConfig.Type = "oneshot";
             script = ''
-              set -x
-              _awk=${pkgs.gawk}/bin/gawk
-              _grep=${pkgs.gnugrep}/bin/grep
               mkdir -p /mnt
               # If encrypted, prefer blkid-discovered btrfs devices and the specified mapper device.
               find_btrfs_device() {
                 root_subvol='${cfg_impermanence.root-subvol}'
                 mapper=/dev/mapper/${cfg_encrypt.encrypted-partition}
-
                 if [ -e "$mapper" ]; then
                   echo "[impermanence] [crypt] checking mapper $mapper" >&2
                   _tmp=$(mktemp -d) || true
                   if [ -n "$_tmp" ] && mount -o ro "$mapper" "$_tmp" 2>/dev/null; then
-                    if btrfs subvolume list "$_tmp" 2>/dev/null | $_awk '{print $9}' | $_grep -qx "$root_subvol"; then
-                      umount "$_tmp" 2>/dev/null || true
-                      rmdir "$_tmp" 2>/dev/null || true
+                      if btrfs subvolume list "$_tmp" 2>/dev/null | busybox awk '{print $9}' | busybox grep -qx "$root_subvol"; then
+                        umount "$_tmp" 2>/dev/null || true
+                        rmdir "$_tmp" 2>/dev/null || true
                       echo "$mapper" && return 0
                     fi
-                    umount "$_tmp" 2>/dev/null || true
+                      umount "$_tmp" 2>/dev/null || true
                   fi
                   rmdir "$_tmp" 2>/dev/null || true
                 fi
-
                 # Use blkid first to limit candidates
-                blkid -o device -t TYPE=btrfs 2>/dev/null | while read d; do
+                  blkid -o device -t TYPE=btrfs 2>/dev/null | while read d; do
                   [ -e "$d" ] || continue
                   echo "[impermanence] checking $d" >&2
                   _tmp=$(mktemp -d) || continue
-                  if mount -o ro "$d" "$_tmp" 2>/dev/null; then
-                    if btrfs subvolume list "$_tmp" 2>/dev/null | $_awk '{print $9}' | $_grep -qx "$root_subvol"; then
+                    if mount -o ro "$d" "$_tmp" 2>/dev/null; then
+                      if btrfs subvolume list "$_tmp" 2>/dev/null | busybox awk '{print $9}' | busybox grep -qx "$root_subvol"; then
+                        umount "$_tmp" 2>/dev/null || true
+                        rmdir "$_tmp" 2>/dev/null || true
+                        echo "$d" && return 0
+                      fi
                       umount "$_tmp" 2>/dev/null || true
-                      rmdir "$_tmp" 2>/dev/null || true
-                      echo "$d" && return 0
-                    fi
-                    umount "$_tmp" 2>/dev/null || true
                   fi
                   rmdir "$_tmp" 2>/dev/null || true
                 done
 
-                for dev in $(ls /dev/mapper 2>/dev/null | sed 's/^/\/dev\/mapper\//'); do
+                for dev in $(ls /dev/mapper 2>/dev/null | busybox sed 's/^/\/dev\/mapper\//'); do
                   [ -e "$dev" ] || continue
                   echo "[impermanence] [mapper] checking $dev" >&2
                   _tmp=$(mktemp -d) || continue
                   if mount -o ro "$dev" "$_tmp" 2>/dev/null; then
-                    if btrfs subvolume list "$_tmp" 2>/dev/null | $_awk '{print $9}' | $_grep -qx "$root_subvol"; then
+                    if btrfs subvolume list "$_tmp" 2>/dev/null | busybox awk '{print $9}' | busybox grep -qx "$root_subvol"; then
                       umount "$_tmp" 2>/dev/null || true
                       rmdir "$_tmp" 2>/dev/null || true
                       echo "$dev" && return 0
@@ -177,7 +176,7 @@ in
                   echo "[impermanence] [nvme|sd] checking $dev" >&2
                   _tmp=$(mktemp -d) || continue
                   if mount -o ro "$dev" "$_tmp" 2>/dev/null; then
-                    if btrfs subvolume list "$_tmp" 2>/dev/null | $_awk '{print $9}' | $_grep -qx "$root_subvol"; then
+                    if btrfs subvolume list "$_tmp" 2>/dev/null | busybox awk '{print $9}' | busybox grep -qx "$root_subvol"; then
                       umount "$_tmp" 2>/dev/null || true
                       rmdir "$_tmp" 2>/dev/null || true
                       echo "$dev" && return 0
@@ -186,10 +185,9 @@ in
                   fi
                   rmdir "$_tmp" 2>/dev/null || true
                 done
-                set +x
                 return 1
               }
-set -x
+
               BTRFS_DEV=$(find_btrfs_device)
               find_rc=$?
               if [ $find_rc -ne 0 ] || [ -z "$BTRFS_DEV" ]; then
@@ -210,7 +208,6 @@ set -x
               btrfs subvolume snapshot /mnt/${cfg_impermanence.blank-root-subvol} /mnt/${cfg_impermanence.root-subvol}
               mkdir -p /mnt/${cfg_impermanence.root-subvol}/mnt
               umount /mnt
-              set +x
             '';
           };
         };
@@ -222,9 +219,7 @@ set -x
         let
           # Running this will show what changed during boot to potentially use for persisting
           impermanence-fsdiff = pkgs.writeShellScriptBin "impermanence-fsdiff" ''
-            _awk=${pkgs.gawk}/bin/gawk
-            _grep=${pkgs.gnugrep}/bin/grep
-            _mount_drive=''${1:-"$(mount | $_grep '.* on / type btrfs' | $_awk '{ print $1}')"}
+            _mount_drive=''${1:-"$(mount | grep '.* on / type btrfs' | awk '{ print $1}')"}
             _tmp_root=$(mktemp -d)
             mkdir -p "$_tmp_root"
             sudo mount -o subvol=/ "$_mount_drive" "$_tmp_root" > /dev/null 2>&1
@@ -238,7 +233,7 @@ set -x
             while read path; do
               path="/$path"
                if [ -L "$path" ]; then
-                  : # The path is a symbolic link, so is probably handled by NixOS already
+                  : # The path is a symbolic link so is probably handled by NixOS already
                 elif [ -d "$path" ]; then
                   : # The path is a directory, ignore
                 else
@@ -264,6 +259,8 @@ set -x
             ++ lib.optional cfg_impermanence.persist.machine-id "/etc/machine-id";
         };
     };
+
+
 
     fileSystems = mkIf ((cfg_impermanence.enable) && (config.host.filesystem.btrfs.enable)) {
       "/persist" = {
