@@ -19,7 +19,7 @@ in
       };
       regdom = mkOption {
         type = types.nullOr types.str;
-        default = "CA";
+        default = "US";
         description = "Regulatory domain (ISO 3166-1 alpha-2).";
       };
     };
