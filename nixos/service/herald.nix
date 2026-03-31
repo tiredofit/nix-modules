@@ -26,7 +26,7 @@
 
         package = mkOption {
           type = with types; package;
-          default = inputs.herald.packages.${pkgs.system}.herald;
+          default = inputs.herald.packages.${pkgs.stdenv.hostPlatform.system}.herald;
           description = "Herald package to use.";
         };
 
@@ -206,7 +206,7 @@
       services.herald =
         let
         opt = name: val: def: lib.optionalAttrs (val != def) { "${name}" = val; };
-        defaultPkg = inputs.herald.packages.${pkgs.system}.herald;
+        defaultPkg = inputs.herald.packages.${pkgs.stdenv.hostPlatform.system}.herald;
 
         includeFiles = let
           userIncludes = if cfg.include != null then (if builtins.isList cfg.include then cfg.include else [ cfg.include ]) else [];
