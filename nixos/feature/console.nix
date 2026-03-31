@@ -14,7 +14,7 @@ in
       };
       font = mkOption {
         default = null;
-        type = with types; str;
+        type = types.nullOr types.str;
         description = "Sets the console font";
       };
       keymap = mkOption {
