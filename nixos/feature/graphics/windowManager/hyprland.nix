@@ -12,7 +12,7 @@ in
         package = pkgs.hyprland;
         #portalPackage = pkgs.xdg-desktop-portal-hyprland;
         withUWSM  = true;
-        #package = inputs.hyprland.packages.${pkgs.system}.hyprland;
+        #package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
       };
     };
 
