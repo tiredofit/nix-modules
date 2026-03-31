@@ -27,7 +27,7 @@ in
 
       package = mkOption {
         type = with types; package;
-        default = inputs.zeroplex.packages.${pkgs.system}.zeroplex;
+        default = inputs.zeroplex.packages.${pkgs.stdenv.hostPlatform.system}.zeroplex;
         description = "ZeroPlex package to use.";
       };
 
