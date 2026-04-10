@@ -5,33 +5,30 @@ let
 in
 
 {
-  config = mkIf (graphics.enable && graphics.windowManager.manager == "hyprland") {
+  config = mkIf (graphics.enable && graphics.windowManager.manager == "hyprland") (let
+    hyprlandUWSMDesktopOverride = pkgs.runCommand "hyprland-uwsm-desktop" {} ''
+      mkdir -p $out/share/wayland-sessions
+      cat > $out/share/wayland-sessions/hyprland.desktop <<'EOF'
+[Desktop Entry]
+Name=Hyprland (uwsm-managed)
+Comment=An intelligent dynamic tiling Wayland compositor
+Exec=uwsm start -e -D Hyprland hyprland.desktop
+Type=Application
+EOF
+    '';
+  in {
     programs = {
       hyprland = {
         enable = mkDefault true;
-        package = pkgs.hyprland;
+        package = mkDefault pkgs.hyprland;
         #portalPackage = pkgs.xdg-desktop-portal-hyprland;
-        withUWSM  = true;
+        withUWSM  = mkDefault true;
         #package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
       };
     };
 
-    #xdg.portal = {
-    #  enable = true;
-    #  xdgOpenUsePortal = true;
-    #  config.common = {
-    #    "org.freedesktop.impl.portal.Secret" = [ "gnome-keyring" ];
-    #    "org.freedesktop.impl.portal.ScreenCast" = "hyprland";
-    #    #"org.freedesktop.impl.portal.ScreenCast" = [ "wlr" ];
-    #    #"org.freedesktop.impl.portal.Screenshot" = [ "wlr" ];
-    #    #"org.freedesktop.portal.FileChooser" = [ "xdg-desktop-portal-gtk" ];
-    #  };
-    #  extraPortals = with pkgs; [
-    #    xdg-desktop-portal-gtk
-    #    xdg-desktop-portal-wlr
-    #    xdg-desktop-portal-hyprland
-    #    #xdg-desktop-portal-shana
-    #  ];
-    #};
-  };
+    environment.systemPackages = mkIf config.programs.hyprland.withUWSM [
+      hyprlandUWSMDesktopOverride
+    ];
+  });
 }
