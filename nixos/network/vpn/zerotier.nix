@@ -210,7 +210,7 @@ status() {
   echo "zerotierone: $(systemctl is-active zerotierone 2>/dev/null || true)"
   echo
   echo "ZeroTier interfaces:"
-  ip -brief link show | awk '/zt/ {print $0}' || echo "no zt* interfaces"
+  ${pkgs.iproute2}/bin/ip -brief link show | ${pkgs.gawk}/bin/awk '/zt/ {print $0}' || echo "no zt* interfaces"
   echo
 
   IPTABLES=${pkgs.iptables}/bin/iptables
@@ -264,7 +264,7 @@ status() {
 }
 
 ZT_CIDRS() {
-  ip -o -4 addr show | awk '/ zt/ {print $4}' | sort -u
+  ${pkgs.iproute2}/bin/ip -o -4 addr show | ${pkgs.gawk}/bin/awk '/ zt/ {print $4}' | sort -u
 }
 
 case "$1" in
