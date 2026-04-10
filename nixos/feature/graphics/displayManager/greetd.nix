@@ -38,8 +38,10 @@ with lib;
                 regreetBin = "${pkgs.regreet}/bin/regreet";
                 tuigreetBin = "${pkgs.tuigreet}/bin/tuigreet";
                 desktops = config.services.displayManager.sessionData.desktops;
+                # writable directory where greetd/tuigreet can store/overwrite session files
+                sessionsDir = "/var/lib/greetd/wayland-sessions";
                 tuigreetSessionsFlag = if config.host.feature.graphics.backend == "wayland" then
-                  " --sessions ${desktops}/share/wayland-sessions "
+                  " --sessions " + sessionsDir + " "
                 else
                   "";              in
                 if greeter == "tuigreet" then
@@ -56,6 +58,14 @@ with lib;
         lightdm.enable = mkForce false;
         startx.enable = config.services.xserver.enable;
       };
+    };
+    system.activationScripts.greetd-sessions = {
+      text = ''
+        mkdir -p /var/lib/greetd/wayland-sessions
+        if [ -d "${config.services.displayManager.sessionData.desktops}/share/wayland-sessions" ]; then
+          cp -aT "${config.services.displayManager.sessionData.desktops}/share/wayland-sessions" "/var/lib/greetd/wayland-sessions"
+        fi
+      '';
     };
   };
 }

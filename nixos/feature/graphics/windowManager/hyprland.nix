@@ -30,5 +30,11 @@ EOF
     environment.systemPackages = mkIf config.programs.hyprland.withUWSM [
       hyprlandUWSMDesktopOverride
     ];
+    system.activationScripts.hyprland-uwsm-desktop = {
+      text = ''
+        mkdir -p /var/lib/greetd/wayland-sessions
+        cp -aT "${hyprlandUWSMDesktopOverride}/share/wayland-sessions" "/var/lib/greetd/wayland-sessions" || true
+      '';
+    };
   });
 }
