@@ -48,6 +48,15 @@ in
         systemd-networkd.stopIfChanged = if (cfg == "systemd-networkd" || cfg == "both") then pkgs.lib.mkForce false else false;
         systemd-resolved.stopIfChanged = mkDefault false;
         NetworkManager-wait-online.enable = mkIf (cfg == "networkmanager" || cfg == "both") false;
+        network-resume = mkIf (cfg == "networkmanager" || cfg == "both") {
+          description = "Unblock RFKill and restart NetworkManager after sleep";
+          wantedBy = [ "sleep.target" ];
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = "/bin/sh -c 'rfkill unblock all; sleep 1; systemctl restart NetworkManager'";
+            After = "suspend.target";
+          };
+        };
       };
     };
   };
