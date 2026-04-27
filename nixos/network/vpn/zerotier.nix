@@ -21,12 +21,12 @@ in
         description = "Enables Zerotier virtual ethernet switch functionality";
       };
       identity = {
-        public = {
+        public = mkOption {
           default = "null";
           type = with types; str;
           description = "Public Identity";
         };
-        private = {
+        private = mkOption {
           default = "null";
           type = with types; str;
           description = "Private key of Identity";
