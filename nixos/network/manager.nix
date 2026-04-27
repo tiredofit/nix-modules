@@ -6,7 +6,7 @@ in
 {
   options = {
     host.network.manager = mkOption {
-      type = types.enum ["networkmanager" "systemd-networkd" "both"];
+      type = types.nullOr (types.enum ["networkmanager" "systemd-networkd" "both"]);
       default = null;
       description = "Network Manager";
     };
