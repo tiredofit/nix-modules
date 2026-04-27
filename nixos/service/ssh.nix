@@ -127,8 +127,8 @@ in
       };
 
       fail2ban.jails = mkIf config.host.network.firewall.fail2ban.enable {
-        sshd-aggresive = ''
-          enabled = lib.mkForce true
+        sshd-aggressive = ''
+          enabled = true
           filter = sshd[mode=aggressive]
         '';
       };
