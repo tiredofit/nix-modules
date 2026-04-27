@@ -51,7 +51,7 @@ in
       };
 
       swapDevices = [{
-        device = swap_location;
+        device = cfg.file;
         randomEncryption = {
           enable = cfg.encrypt;
           allowDiscards = "once";
