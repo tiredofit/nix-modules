@@ -34,14 +34,14 @@ in
             socket = "/run/fail2ban/fail2ban.sock";
             pidfile = "/run/fail2ban/fail2ban.pid";
             dbfile = "/var/lib/fail2ban/fail2ban.sqlite3";
-            dbpurageage = mkDefault "1d";
+            dbpurgeage = mkDefault "1d";
           };
         };
         ignoreIP = [
-          "127.0.0.1/8"
+          "127.0.0.0/8"
           "10.0.0.0/8"
           "172.16.0.0/12"
-          "192.168.0.0/24"
+          "192.168.0.0/16"
         ];
         maxretry = mkDefault 5;
       };
