@@ -35,7 +35,7 @@ For example to have a base AMD system using with an integrated GPU using BTRFS a
     };
     network = {
       hostname = "samplehostname" ;
-      domainname = "tiredofit.ca" ;
+      domainname = "example.com" ;
     };
     role = server;
   };
