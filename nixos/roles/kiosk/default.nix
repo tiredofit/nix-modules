@@ -73,14 +73,8 @@ in
             };
             manager = mkIf (config.host.feature.graphics.backend == "x") "lightdm";
           };
-          windowManager = mkMerge [
-            (mkIf (config.host.feature.graphics.backend == "cage") {
-              manager = "wayland";
-            })
-            (mkIf (config.host.feature.graphics.backend == "x") {
-              manager = "openbox";
-            })
-          ];
+          # Note: kiosk sessions are managed directly via services.cage / services.xserver,
+          # not through the windowManager compositor modules.
         };
         powermanagement = {
           battery.enable = mkDefault false;
