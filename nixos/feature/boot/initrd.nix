@@ -41,7 +41,11 @@ in
     boot = {
       initrd = {
         compressor = mkDefault cfg.compression.type;
-        compressorArgs = mkDefault [ "-19" ];
+        compressorArgs = mkDefault (
+          if cfg.compression.arguments != null
+          then cfg.compression.arguments
+          else [ "-19" ]
+        );
 
         enable = mkDefault cfg.boot;
 
