@@ -5,7 +5,7 @@ let
 in
 
 {
-  config = mkIf (graphics.enable && graphics.windowManager.manager == "hyprland") (let
+  config = mkIf (graphics.enable && builtins.elem "hyprland" graphics.windowManager.manager) (let
     hyprlandUWSMDesktopOverride = pkgs.runCommand "hyprland-uwsm-desktop" {} ''
       mkdir -p $out/share/wayland-sessions
       cat > $out/share/wayland-sessions/hyprland.desktop <<'EOF'
