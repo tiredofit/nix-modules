@@ -11,9 +11,9 @@ in
   options = {
     host.feature.graphics.windowManager = {
       manager = mkOption {
-        type = types.enum ["cinnamon" "hyprland" null];
-        default = null;
-        description = "Window Manager to use";
+        type = types.listOf (types.enum ["cinnamon" "cosmic" "hyprland" "niri" "sway"]);
+        default = [];
+        description = "List of window managers / desktop environments to enable";
       };
     };
   };
