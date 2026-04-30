@@ -5,7 +5,9 @@ in
   with lib;
 {
   imports = [
+    ./cosmic.nix
     ./hyprland.nix
+    ./niri.nix
   ];
 
   options = {
