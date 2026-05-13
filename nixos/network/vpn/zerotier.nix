@@ -66,6 +66,11 @@ in
         type = with types; port;
         description = "Network port used by Zerotier";
       };
+      cliUsers = mkOption {
+        default = [];
+        type = with types; listOf str;
+        description = "Users to grant read access to authtoken and port information. Reapplied on service restart.";
+      };
     };
   };
 
@@ -105,6 +110,17 @@ in
 
         if [ -f /var/run/secrets/zerotier/identity_public ] ; then cat "/var/run/secrets/zerotier/identity_public" > /var/lib/zerotier-one/identity.public ; fi
         if [ -f /var/run/secrets/zerotier/identity_private ] ; then cat "/var/run/secrets/zerotier/identity_private" > /var/lib/zerotier-one/identity.secret  ; fi
+      '';
+      postStart = optionalString (cfg.cliUsers != []) ''
+        for i in 1 2 3 4 5; do
+          [ -e /var/lib/zerotier-one/authtoken.secret ] && [ -e /var/lib/zerotier-one/zerotier-one.port ] && break
+          sleep 1
+        done
+        for user in ${lib.escapeShellArgs cfg.cliUsers}; do
+          ${pkgs.acl}/bin/setfacl -m "u:$user:x" /var/lib/zerotier-one
+          ${pkgs.acl}/bin/setfacl -m "u:$user:r" /var/lib/zerotier-one/authtoken.secret
+          ${pkgs.acl}/bin/setfacl -m "u:$user:r" /var/lib/zerotier-one/zerotier-one.port
+        done
       '';
       postStop = ''
         _zt_leave_network() {
