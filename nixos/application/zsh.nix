@@ -237,7 +237,7 @@ in
             }
           fi
 
-          ## Interactive systemctl helpers via fzf
+          # simple systemctl helpers using fzf
           if command -v "fzf" >/dev/null 2>&1; then
             _svc_select() {
               local mode="$1"
@@ -255,10 +255,9 @@ in
             urestart(){ local unit=$(_svc_select --user);    [ -n "$unit" ] && systemctl --user restart "$unit"; }
           fi
 
-          ## Source drop-in zshrc snippets
-          if [ -d "$HOME/.zshrc.d" ]; then
-            for script in "$HOME"/.zshrc.d/*; do
-              source "$script"
+          if [ -d "$HOME/.zshrc.d" ] ; then
+            for script in $HOME/.zshrc.d/* ; do
+                source $script
             done
           fi
 
